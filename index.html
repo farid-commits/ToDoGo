@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Farid · Workspace</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Workspace">
+<meta name="theme-color" content="#ffffff">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<!-- Firebase (compat builds — global `firebase` object) -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script>function gmapsReady(){window._gmaps=true;if(window._gmapsQueue){window._gmapsQueue.forEach(fn=>fn());window._gmapsQueue=[];}}</script>
+<script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDz5ehw-CkCS0ji-SmH77btBA3_KNEQ5go&libraries=places&callback=gmapsReady" onerror="window._gmapsFailed=true"></script>
+<style>
+:root { color-scheme: light; --bg:#f6f6f6; --surface:#fff; --border:#e2e2e2; --text:#111; --muted:#888; --accent:#2563eb; --accent-bg:#eff6ff; --p1-bg:#fee2e2; --p1:#dc2626; --p2-bg:#fef3c7; --p2:#b45309; --p3-bg:#dcfce7; --p3:#15803d; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.header h1{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.header-right{display:flex;align-items:center;gap:8px}
+.sync-btn{font-size:12px;font-weight:500;padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;display:flex;align-items:center;gap:5px}
+.sync-btn:hover{background:var(--bg)}
+.sync-status{font-size:11px;color:var(--muted)}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);padding:0 20px}
+.tab{padding:10px 16px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.panel{display:none;padding:20px}
+.panel.active{display:block}
+
+/* Quick input */
+.quick-input-wrap{margin-bottom:20px}
+.quick-input-outer{background:var(--surface);border:1px solid var(--border);border-radius:10px;transition:box-shadow .15s}
+.quick-input-outer:focus-within{box-shadow:0 0 0 2px var(--accent)}
+.quick-input-outer input{width:100%;border:none;outline:none;padding:12px 14px;font-size:14px;background:transparent;color:var(--text)}
+.quick-input-outer input::placeholder{color:var(--muted)}
+.quick-expand{display:none;border-top:1px solid var(--border);padding:12px 14px;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.quick-expand.visible{display:flex}
+.qf{display:flex;flex-direction:column;gap:3px}
+.qf label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.qf select,.qf input[type=date],.qf input[type=text]{border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;background:var(--bg);color:var(--text);min-width:110px}
+.qf select:focus,.qf input:focus{outline:none;border-color:var(--accent)}
+/* AC wrapper — exact same height as other fields */
+.qf .ac-input-row,.edit-row .ac-input-row{border:1px solid var(--border);border-radius:6px;background:var(--bg);min-width:110px;height:28px;display:flex;align-items:center}
+.qf .ac-input-row:focus-within,.edit-row .ac-input-row:focus-within{border-color:var(--accent)}
+.qf .ac-input-row input[type=text],.edit-row .ac-input-row input[type=text]{border:none!important;border-bottom:none!important;outline:none;padding:0 8px;font-size:12px;background:transparent;color:var(--text);width:100%;height:100%;margin-bottom:0!important;line-height:28px}
+.ac-add-btn{font-size:14px;line-height:1;padding:0 4px}
+/* Drag handle — darker so it's visible */
+.drag-handle{color:#bbb;cursor:grab;font-size:16px;padding:0 6px 0 0;flex-shrink:0;user-select:none;line-height:1;font-weight:700;letter-spacing:-1px}
+.drag-handle:hover{color:#888}
+.task-row:hover .drag-handle{color:#888}
+.task-row.drag-over-top{border-top:2px solid var(--accent)}
+.task-row.drag-over-bottom{border-bottom:2px solid var(--accent)}
+.task-row.dragging{opacity:.35}
+.expand-actions{display:flex;gap:6px;margin-left:auto;align-items:flex-end;padding-bottom:1px}
+.btn-add{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:500;cursor:pointer}
+.btn-cancel{background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:6px 8px}
+
+/* Project sections */
+.project-section{margin-bottom:20px}
+.project-section.proj-drag-over{outline:2px dashed var(--accent);outline-offset:2px;border-radius:8px}
+.project-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;padding:0 2px;cursor:grab;user-select:none;display:inline-block}
+.project-label:active{cursor:grabbing}
+.task-row{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;align-items:flex-start;gap:10px;cursor:default}
+.task-row:hover{border-color:#ccc}
+.task-check{margin-top:1px;flex-shrink:0;width:16px;height:16px;border-radius:50%;border:2px solid var(--border);cursor:pointer;transition:background .12s,border-color .12s;display:flex;align-items:center;justify-content:center}
+.task-check:hover{border-color:var(--accent)}
+.task-check.done{background:var(--accent);border-color:var(--accent)}
+.task-check.done::after{content:'';display:block;width:5px;height:8px;border:2px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translate(-1px,-1px)}
+.task-body{flex:1;min-width:0}
+.task-title{font-size:13px;font-weight:500;margin-bottom:5px}
+.task-title.done{text-decoration:line-through;color:var(--muted)}
+.task-badges{display:flex;flex-wrap:wrap;gap:4px}
+.badge{display:inline-flex;align-items:center;font-size:11px;padding:2px 7px;border-radius:10px;font-weight:500}
+.badge-status-todo{background:#f1f5f9;color:#475569}
+.badge-status-inprogress{background:#eff6ff;color:#2563eb}
+.badge-status-done{background:#dcfce7;color:#15803d}
+.badge-p1{background:var(--p1-bg);color:var(--p1)}
+.badge-p2{background:var(--p2-bg);color:var(--p2)}
+.badge-p3{background:var(--p3-bg);color:var(--p3)}
+.badge-due{background:#f8f8f8;color:var(--muted);border:1px solid var(--border)}
+.badge-contact{background:var(--accent-bg);color:var(--accent)}
+.badge-assignee{background:#f0fdf4;color:#166534}
+.task-row{cursor:pointer}
+.task-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.status-btn{border:none;border-radius:12px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;letter-spacing:.01em}
+.status-btn.todo{background:#f1f5f9;color:#64748b}
+.status-btn.todo:hover{background:#e2e8f0}
+.status-btn.inprogress{background:#dbeafe;color:#1d4ed8}
+.status-btn.inprogress:hover{background:#bfdbfe}
+.status-btn.done{background:#dcfce7;color:#15803d}
+.status-btn.done:hover{background:#bbf7d0}
+.empty-state{text-align:center;padding:32px;color:var(--muted);font-size:13px}
+/* View toggle — compact, tucked into task panel header */
+.view-toggle{display:flex;align-items:center;gap:2px;margin-bottom:14px;justify-content:flex-end}
+.view-toggle-label{font-size:11px;color:var(--muted);margin-right:4px}
+.vt-btn{background:none;border:none;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;padding:3px 8px;border-radius:4px;transition:all .1s}
+.vt-btn:hover{color:var(--text);background:var(--bg)}
+.vt-btn.active{color:var(--accent);background:var(--accent-bg)}
+.archive-note{font-size:11px;color:var(--muted);margin-right:auto}
+
+/* Inline edit */
+.edit-row{background:var(--accent-bg);border:1px solid var(--accent);border-radius:8px;padding:12px 14px;margin-bottom:6px}
+.edit-row>input[type=text]{width:100%;border:none;border-bottom:1px solid var(--border);outline:none;font-size:13px;font-weight:500;padding:2px 0;margin-bottom:10px;background:transparent;color:var(--text)}
+.edit-fields{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+.edit-actions{display:flex;gap:6px;margin-left:auto}
+.btn-save{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;font-weight:500}
+.btn-delete{background:#fee2e2;color:var(--p1);border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer}
+.btn-cancel2{background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;padding:5px 6px}
+
+/* CRM */
+.crm-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap}
+.crm-search{border:1px solid var(--border);border-radius:6px;padding:7px 12px;font-size:13px;width:200px;background:var(--surface);color:var(--text);outline:none}
+.crm-search:focus{border-color:var(--accent)}
+.btn-add-contact{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:500;cursor:pointer}
+table{width:100%;border-collapse:collapse;font-size:13px;background:var(--surface);border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;transition:color .12s}
+th:hover{color:var(--text)}
+th.sort-active{color:var(--accent)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg)}
+.type-pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--accent-bg);color:var(--accent);font-weight:500}
+
+/* Custom contact autocomplete */
+.ac-wrap{position:relative}
+.ac-input-row{display:flex;align-items:center;padding:0 4px 0 0}
+.ac-input-row:focus-within{border-color:var(--accent)}
+.ac-add-btn{flex-shrink:0;background:none;border:none;color:var(--accent);font-size:15px;cursor:pointer;padding:0 2px;line-height:1;font-weight:600}
+.ac-add-btn:hover{color:#1d4ed8}
+.ac-dropdown{position:fixed;min-width:220px;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:9999;max-height:180px;overflow-y:auto;display:none}
+.ac-dropdown.open{display:block}
+.ac-item{padding:7px 12px;font-size:12px;cursor:pointer;display:flex;flex-direction:column}
+.ac-item:hover,.ac-item.focused{background:var(--accent-bg)}
+.ac-item-name{font-weight:500;color:var(--text)}
+.ac-item-sub{font-size:11px;color:var(--muted)}
+.ac-item-add{padding:7px 12px;font-size:12px;cursor:pointer;color:var(--accent);font-weight:500;border-top:1px solid var(--border);display:flex;align-items:center;gap:5px}
+.ac-item-add:hover{background:var(--accent-bg)}
+
+/* Contact modal */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:50;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border-radius:12px;padding:22px;width:460px;max-width:95vw;max-height:88vh;overflow-y:auto}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:16px}
+.mrow{margin-bottom:11px}
+.mrow label{display:block;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.mrow input,.mrow select,.mrow textarea{width:100%;border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);outline:none}
+.mrow input:focus,.mrow select:focus{border-color:var(--accent)}
+.mrow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.mbtn{padding:7px 15px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:none}
+.mbtn-primary{background:var(--accent);color:#fff}
+.mbtn-secondary{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+/* Recommendations */
+.rec-cat-pill{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px}
+.rc-Book{background:#ede9fe;color:#6d28d9}
+.rc-Restaurant{background:#fff7ed;color:#c2410c}
+.rc-Movie{background:#fce7f3;color:#be185d}
+.rc-Podcast{background:#ecfdf5;color:#065f46}
+.rc-Music{background:#eff6ff;color:#1d4ed8}
+.rc-Other{background:#f1f5f9;color:#475569}
+.rec-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.rec-row:last-child{border-bottom:none}
+.rec-by{font-size:11px;color:var(--muted)}
+.rec-filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+/* Google Places autocomplete */
+.pac-container{z-index:9999!important;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);border:1px solid var(--border);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px}
+.pac-item{padding:8px 12px;cursor:pointer}
+.pac-item:hover,.pac-item-selected{background:var(--accent-bg)}
+.place-preview{display:flex;align-items:center;gap:8px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:12px}
+.place-preview-name{font-weight:600;color:var(--accent)}
+.place-preview-addr{color:var(--muted);flex:1}
+.place-preview a{color:var(--accent);text-decoration:none;font-weight:500}
+.place-preview a:hover{text-decoration:underline}
+.place-clear{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:0 2px}
+.rec-filter{border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:500;cursor:pointer}
+.rec-filter.active{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+</style>
+</head>
+<body>
+
+<div id="auth-overlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;width:320px;max-width:90vw">
+    <h2 style="font-size:16px;font-weight:600;margin-bottom:4px">Farid · Workspace</h2>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Sign in to sync your tasks and contacts.</p>
+    <input id="auth-email" type="email" placeholder="Email" autocomplete="username" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:9px 10px;font-size:14px;margin-bottom:8px;outline:none">
+    <input id="auth-pass" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:9px 10px;font-size:14px;margin-bottom:12px;outline:none" onkeydown="if(event.key==='Enter')doSignIn()">
+    <button onclick="doSignIn()" id="auth-btn" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:6px;padding:10px;font-size:14px;font-weight:500;cursor:pointer">Sign in</button>
+    <div id="auth-error" style="font-size:12px;color:#dc2626;margin-top:10px;display:none"></div>
+  </div>
+</div>
+<div class="header">
+  <h1>Farid · Workspace</h1>
+  <div class="header-right">
+    <span class="sync-status" id="sync-status">Starting…</span>
+    <button class="sync-btn" onclick="exportCSV()" title="Download tasks & contacts as CSV">⬇ Export</button>
+    <button class="sync-btn" onclick="document.getElementById('import-file').click()" title="Import workspace data (JSON)">⬆ Import</button>
+    <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="importJSON(this)">
+    <button class="sync-btn" onclick="openProjectsModal()" title="Manage projects" style="padding:5px 9px">⚙</button>
+    <button class="sync-btn" onclick="doSignOut()" title="Sign out" style="padding:5px 9px">⎋</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('tasks')">Tasks</div>
+  <div class="tab" onclick="switchTab('crm')">Contacts</div>
+  <div class="tab" onclick="switchTab('recs')">Recommendations</div>
+</div>
+
+<div id="panel-tasks" class="panel active">
+  <div class="quick-input-wrap">
+    <div class="quick-input-outer">
+      <input type="text" id="quick-input" placeholder="What needs to be done?" autocomplete="off"
+        onfocus="showExpand()" oninput="showExpand()">
+      <div class="quick-expand" id="quick-expand">
+        <div class="qf">
+          <label>Project</label>
+          <select id="qi-project">
+            <option>Investor Relationships</option>
+            <option>Double Cheque SEIS/EIS</option>
+            <option>Q Payments</option>
+          </select>
+        </div>
+        <div class="qf">
+          <label>Due date</label>
+          <input type="date" id="qi-due">
+        </div>
+        <div class="qf">
+          <label>Assignee</label>
+          <div class="ac-wrap">
+            <div class="ac-input-row">
+              <input type="text" id="qi-assignee" placeholder="Search…" autocomplete="off"
+                oninput="asgnFilter('qi')" onfocus="asgnOpen('qi')" onblur="asgnClose('qi')" onkeydown="asgnKey(event,'qi')">
+            </div>
+            <div class="ac-dropdown" id="qi-asgn-drop"></div>
+          </div>
+        </div>
+        <div class="qf">
+          <label>Contact</label>
+          <div class="ac-wrap" id="qi-ac-wrap">
+            <div class="ac-input-row">
+              <input type="text" id="qi-contact" placeholder="Search…" autocomplete="off"
+                oninput="acFilter('qi')" onfocus="acOpen('qi')" onblur="acClose('qi')" onkeydown="acKey(event,'qi')">
+              <button type="button" class="ac-add-btn" title="Add new contact" onclick="openContactModalFromTask('qi-contact')">＋</button>
+            </div>
+            <div class="ac-dropdown" id="qi-ac-drop"></div>
+          </div>
+        </div>
+        <div class="expand-actions">
+          <button class="btn-cancel" onclick="hideExpand()">Cancel</button>
+          <button class="btn-add" onclick="addTask()">Add task</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="view-toggle">
+    <span class="archive-note" id="archive-note"></span>
+    <button class="vt-btn active" id="pill-active" onclick="setView('active')">Active</button>
+    <button class="vt-btn" id="pill-all" onclick="setView('all')">All</button>
+    <button class="vt-btn" id="pill-archive" onclick="setView('archive')">Archive</button>
+  </div>
+  <div id="tasks-wrap"></div>
+</div>
+
+<div id="panel-recs" class="panel">
+  <div class="rec-filter-bar" id="rec-filter-bar"></div>
+  <div id="recs-wrap"></div>
+</div>
+
+<div id="panel-crm" class="panel">
+  <div class="crm-toolbar">
+    <input class="crm-search" type="text" id="crm-search" placeholder="Search contacts…" oninput="renderCRM()">
+    <button class="btn-add-contact" onclick="openContactModal()">+ Add contact</button>
+  </div>
+  <div id="crm-wrap"></div>
+</div>
+
+<!-- Contact modal -->
+<div class="modal-bg" id="contact-modal">
+  <div class="modal">
+    <h3 id="contact-modal-title">Add contact</h3>
+    <div class="mrow2">
+      <div class="mrow"><label>First name</label><input type="text" id="cf-firstname" placeholder="First"></div>
+      <div class="mrow"><label>Last name</label><input type="text" id="cf-lastname" placeholder="Last"></div>
+    </div>
+    <div class="mrow2">
+      <div class="mrow"><label>Type</label>
+        <select id="cf-type"><option>Investor</option><option>Introducer</option><option>Counterparty</option><option>Client</option><option>Advisor</option><option>Plus</option><option>Other</option></select>
+      </div>
+      <div class="mrow"><label>Last contact</label><input type="date" id="cf-last"></div>
+    </div>
+    <div class="mrow2">
+      <div class="mrow"><label>Email</label><input type="email" id="cf-email"></div>
+      <div class="mrow"><label>Phone</label><input type="text" id="cf-phone"></div>
+    </div>
+    <div class="mrow"><label>LinkedIn URL</label><input type="url" id="cf-linkedin" placeholder="https://linkedin.com/in/…"></div>
+    <div class="mrow"><label>Project</label>
+      <select id="cf-project"><option value="">—</option></select>
+    </div>
+    <div class="mrow" style="margin-top:8px"><label>Notes</label><textarea id="cf-notes" rows="2"></textarea></div>
+    <div class="mrow" style="margin-top:12px">
+      <label style="margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">
+        Recommendations
+        <button type="button" onclick="showAddRecForm()" style="font-size:11px;font-weight:500;color:var(--accent);background:none;border:none;cursor:pointer">+ Add</button>
+      </label>
+      <div id="rec-add-form" style="display:none;background:var(--bg);border-radius:8px;padding:10px;margin-bottom:8px;border:1px solid var(--border)">
+        <div style="margin-bottom:7px">
+          <select id="rec-cat" onchange="onRecCatChange()" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;background:var(--surface);color:var(--text)">
+            <option>Book</option><option>Restaurant</option><option>Movie</option><option>Podcast</option><option>Music</option><option>Other</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:7px">
+          <input type="text" id="rec-item" placeholder="Name (required)…" autocomplete="off"
+            style="flex:1;border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;background:var(--surface);color:var(--text)"
+            onkeydown="if(event.key==='Enter')saveRecItem()">
+          <button type="button" onclick="saveRecItem()" style="background:var(--accent);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap">Save</button>
+          <button type="button" onclick="hideAddRecForm()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer">Cancel</button>
+        </div>
+        <div id="rec-place-preview" style="display:none" class="place-preview">
+          <span class="place-preview-name" id="rec-place-name"></span>
+          <span class="place-preview-addr" id="rec-place-addr"></span>
+          <a id="rec-place-link" href="#" target="_blank" rel="noopener">Open ↗</a>
+          <button type="button" class="place-clear" onclick="clearPlaceSelection()" title="Clear">×</button>
+        </div>
+        <input type="text" id="rec-note" placeholder="Note (optional)…" autocomplete="off"
+          style="width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;background:var(--surface);color:var(--text)">
+      </div>
+      <div id="cf-recs-list"></div>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between">
+      <button class="mbtn" id="contact-delete-btn" style="background:#fee2e2;color:#dc2626;display:none" onclick="deleteContact()">Delete</button>
+      <div style="display:flex;gap:8px">
+        <button class="mbtn mbtn-secondary" onclick="closeContactModal()">Cancel</button>
+        <button class="mbtn mbtn-primary" onclick="saveContact()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Projects modal -->
+<div class="modal-bg" id="projects-modal">
+  <div class="modal" style="width:360px">
+    <h3>Manage Projects</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">These mirror your projects in Claude Chat. Add or remove here to keep them in sync.</p>
+    <div id="projects-list" style="margin-bottom:12px"></div>
+    <div style="display:flex;gap:6px">
+      <input type="text" id="new-project-input" placeholder="New project name…" style="flex:1;border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;outline:none" onkeydown="if(event.key==='Enter')addProject()">
+      <button class="mbtn mbtn-primary" onclick="addProject()">Add</button>
+    </div>
+    <div class="modal-footer">
+      <button class="mbtn mbtn-secondary" onclick="closeProjectsModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Firebase configuration ───────────────────────────────────────────────────
+// Paste your config from Firebase console → Project settings → Your apps → Web app
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBmmYZHdmWa_jkHU9DPC4e0KwE91QGWGfQ",
+  authDomain: "todogo1.firebaseapp.com",
+  projectId: "todogo1",
+  storageBucket: "todogo1.firebasestorage.app",
+  messagingSenderId: "941710038936",
+  appId: "1:941710038936:web:e491de314e4dab84cc3ded",
+  measurementId: "G-FFELKVZNVV"
+};
+
+const DEFAULT_PROJECTS = ['Investor Relationships','Double Cheque SEIS/EIS','Q Payments'];
+let PROJECTS = JSON.parse(localStorage.getItem('ws2projects') || JSON.stringify(DEFAULT_PROJECTS));
+const STATUSES = ['To Do','In Progress','Done'];
+
+// No data is embedded in this file (it is hosted on a public repo).
+// Data lives in Firestore + localStorage cache; use ⬆ Import for one-time migration.
+let tasks = JSON.parse(localStorage.getItem('ws2tasks') || '[]');
+let contacts = JSON.parse(localStorage.getItem('ws2contacts') || '[]');
+function cName(c) { return [c.firstName, c.lastName].filter(Boolean).join(' ') || c.name || ''; }
+
+// ── Contact ID resolution ─────────────────────────────────────────────────────
+// Store contact ID (e.g. C001) in tasks; display name is looked up dynamically.
+// Falls back gracefully for raw emails or legacy name strings.
+
+function contactById(id) {
+  return contacts.find(c => c.id === id) || null;
+}
+
+// Given whatever is stored (ID, legacy name, or raw email), return the contact object or null
+function resolveContact(val) {
+  if (!val) return null;
+  return contacts.find(c => c.id === val)
+      || contacts.find(c => cName(c).toLowerCase() === val.toLowerCase())
+      || null;
+}
+
+// Display name for a stored contact/assignee value
+function contactDisplayName(val) {
+  if (!val) return '';
+  const c = resolveContact(val);
+  return c ? cName(c) : val; // fallback: show raw value (email or old name)
+}
+
+// When saving a task: if the typed value matches a contact name, store their ID instead
+function resolveContactId(val) {
+  if (!val) return '';
+  const c = contacts.find(cx => cName(cx).toLowerCase() === val.trim().toLowerCase());
+  return c ? c.id : val; // store ID if found, else store as-is (raw email etc.)
+}
+
+// Migrate existing tasks: replace stored names with IDs where possible
+(function migrateContactRefs() {
+  let changed = false;
+  tasks.forEach(t => {
+    ['contact','assignee'].forEach(field => {
+      if (!t[field]) return;
+      const c = contacts.find(cx => cName(cx).toLowerCase() === t[field].toLowerCase());
+      if (c && t[field] !== c.id) { t[field] = c.id; changed = true; }
+    });
+  });
+  if (changed) localStorage.setItem('ws2tasks', JSON.stringify(tasks));
+})();
+
+let editingIdx = null;
+
+function persist() {
+  localStorage.setItem('ws2tasks', JSON.stringify(tasks));
+  localStorage.setItem('ws2contacts', JSON.stringify(contacts));
+  localStorage.setItem('ws2lastSave', new Date().toISOString());
+  scheduleCloudSave();
+}
+
+function setSyncStatus(text) {
+  const el = document.getElementById('sync-status');
+  if (el) el.textContent = text;
+}
+function updateSyncStatus() { /* status now driven by cloud sync layer */ }
+
+// ── Firebase cloud sync ──────────────────────────────────────────────────────
+let _docRef = null, _saveTimer = null, _cloudReady = false;
+
+function fbConfigured() {
+  return FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith('PASTE');
+}
+
+function showAuthOverlay(show) {
+  const o = document.getElementById('auth-overlay');
+  if (o) o.style.display = show ? 'flex' : 'none';
+}
+
+function authError(msg) {
+  const e = document.getElementById('auth-error');
+  if (e) { e.textContent = msg; e.style.display = 'block'; }
+}
+
+function doSignIn() {
+  const email = document.getElementById('auth-email').value.trim();
+  const pass = document.getElementById('auth-pass').value;
+  if (!email || !pass) { authError('Enter email and password'); return; }
+  const btn = document.getElementById('auth-btn');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  firebase.auth().signInWithEmailAndPassword(email, pass)
+    .catch(err => authError(err.message || 'Sign-in failed'))
+    .finally(() => { btn.disabled = false; btn.textContent = 'Sign in'; });
+}
+
+function doSignOut() {
+  if (!fbConfigured()) { showToast('Cloud sync not configured', true); return; }
+  firebase.auth().signOut();
+}
+
+function applyCloudData(data) {
+  if (!data) return;
+  if (Array.isArray(data.projects)) { PROJECTS = data.projects; localStorage.setItem('ws2projects', JSON.stringify(PROJECTS)); }
+  if (Array.isArray(data.tasks)) { tasks = data.tasks; localStorage.setItem('ws2tasks', JSON.stringify(tasks)); }
+  if (Array.isArray(data.contacts)) { contacts = data.contacts; localStorage.setItem('ws2contacts', JSON.stringify(contacts)); }
+  refreshProjectSelects();
+  renderTasks();
+  renderCRM();
+  const recsPanel = document.getElementById('panel-recs');
+  if (recsPanel && recsPanel.classList.contains('active')) renderRecs();
+}
+
+function scheduleCloudSave() {
+  if (!_cloudReady || !_docRef) return;
+  clearTimeout(_saveTimer);
+  setSyncStatus('Saving…');
+  _saveTimer = setTimeout(() => {
+    _docRef.set({
+      projects: PROJECTS, tasks, contacts,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      const t = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+      setSyncStatus('✓ Synced ' + t);
+    }).catch(e => setSyncStatus('Offline — will sync'));
+  }, 700);
+}
+
+function initCloud() {
+  if (!fbConfigured()) { setSyncStatus('Local only — cloud not configured'); return; }
+  firebase.initializeApp(FIREBASE_CONFIG);
+  firebase.firestore().enablePersistence({synchronizeTabs:true}).catch(()=>{});
+  firebase.auth().onAuthStateChanged(user => {
+    if (!user) { _cloudReady = false; _docRef = null; showAuthOverlay(true); setSyncStatus('Signed out'); return; }
+    showAuthOverlay(false);
+    setSyncStatus('Connecting…');
+    _docRef = firebase.firestore().collection('workspaces').doc(user.uid);
+    _docRef.onSnapshot(snap => {
+      if (snap.metadata.hasPendingWrites) return; // our own write echoing back
+      if (!snap.exists) {
+        // first ever run: seed cloud with local data
+        _cloudReady = true;
+        scheduleCloudSave();
+        return;
+      }
+      _cloudReady = true;
+      applyCloudData(snap.data());
+      const t = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+      setSyncStatus('✓ Synced ' + t);
+    }, err => setSyncStatus('Sync error: ' + (err.code || 'unknown')));
+  });
+}
+
+function switchTab(t) {
+  const tabs = ['tasks','crm','recs'];
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active', tabs[i]===t));
+  tabs.forEach(id => document.getElementById('panel-'+id).classList.toggle('active', id===t));
+  if (t==='recs') renderRecs();
+}
+
+// ── Recommendations ───────────────────────────────────────────────────────────
+const REC_CATEGORIES = ['All','Book','Restaurant','Movie','Podcast','Music','Other'];
+let _recFilter = 'All';
+
+function catClass(cat) { return 'rc-' + (REC_CATEGORIES.includes(cat) ? cat : 'Other'); }
+
+// ── Google Places Autocomplete ────────────────────────────────────────────────
+let _placesAC = null;     // Autocomplete instance
+let _selectedPlace = null; // {name, address, placeId, mapsUrl}
+
+function initPlacesAutocomplete() {
+  const input = document.getElementById('rec-item');
+  if (!input || _placesAC) return;
+  if (!window.google || !window.google.maps || !window.google.maps.places) return;
+  _placesAC = new google.maps.places.Autocomplete(input, {
+    types: ['establishment'],
+    fields: ['name','formatted_address','place_id','url']
+  });
+  _placesAC.addListener('place_changed', () => {
+    const place = _placesAC.getPlace();
+    if (!place || !place.name) return;
+    _selectedPlace = {
+      name: place.name,
+      address: place.formatted_address || '',
+      placeId: place.place_id || '',
+      mapsUrl: place.url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}&query_place_id=${place.place_id}`
+    };
+    // Fill input with clean name
+    input.value = place.name;
+    // Show preview chip
+    document.getElementById('rec-place-name').textContent = place.name;
+    document.getElementById('rec-place-addr').textContent = place.formatted_address || '';
+    document.getElementById('rec-place-link').href = _selectedPlace.mapsUrl;
+    document.getElementById('rec-place-preview').style.display = 'flex';
+  });
+}
+
+function clearPlaceSelection() {
+  _selectedPlace = null;
+  document.getElementById('rec-item').value = '';
+  document.getElementById('rec-place-preview').style.display = 'none';
+  document.getElementById('rec-item').focus();
+}
+
+function onRecCatChange() {
+  const cat = document.getElementById('rec-cat').value;
+  clearPlaceSelection();
+  if (cat === 'Restaurant') {
+    const tryInit = () => {
+      if (window._gmaps) { initPlacesAutocomplete(); }
+      else if (!window._gmapsFailed) { (window._gmapsQueue = window._gmapsQueue||[]).push(initPlacesAutocomplete); }
+      // if Maps failed, user types freely — no autocomplete
+    };
+    tryInit();
+    document.getElementById('rec-item').placeholder = 'Search restaurant…';
+  } else {
+    _placesAC = null; // allow garbage collect; new one will init on next Restaurant open
+    document.getElementById('rec-item').placeholder = 'Name (required)…';
+  }
+}
+
+function showAddRecForm() {
+  const f = document.getElementById('rec-add-form');
+  if (!f) return;
+  f.dataset.contactIdx = _editingContactIdx !== null ? _editingContactIdx : '';
+  f.style.display = 'block';
+  clearPlaceSelection();
+  // Init autocomplete if category is already Restaurant
+  const cat = document.getElementById('rec-cat');
+  if (cat) { cat.value = 'Book'; onRecCatChange(); } // reset to Book on open
+  setTimeout(() => {
+    const cat2 = document.getElementById('rec-cat'); if(cat2) cat2.value = 'Book';
+    const i = document.getElementById('rec-item'); if(i) { i.focus(); i.placeholder='Name (required)…'; }
+  }, 50);
+}
+function hideAddRecForm() {
+  const f = document.getElementById('rec-add-form');
+  if (f) { f.style.display='none'; delete f.dataset.contactIdx; }
+  ['rec-item','rec-note'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  clearPlaceSelection();
+  _placesAC = null;
+}
+
+function saveRecItem() {
+  const item = (document.getElementById('rec-item').value||'').trim();
+  if (!item) return;
+  const cat  = document.getElementById('rec-cat').value || 'Other';
+  const note = (document.getElementById('rec-note').value||'').trim();
+  // Read index from the form element (robust — doesn't rely on global state)
+  const f = document.getElementById('rec-add-form');
+  const idx = f && f.dataset.contactIdx !== '' ? parseInt(f.dataset.contactIdx, 10) : _editingContactIdx;
+  if (idx === null || idx === undefined || isNaN(idx) || !contacts[idx]) {
+    showToast('Could not identify contact — please close and reopen the modal', true);
+    return;
+  }
+  const c = contacts[idx];
+  if (!c.recommendations) c.recommendations = [];
+  const rec = {id:'R'+Date.now(), category:cat, item, note, addedAt:new Date().toISOString().split('T')[0]};
+  if (cat === 'Restaurant' && _selectedPlace) {
+    rec.address = _selectedPlace.address;
+    rec.placeId = _selectedPlace.placeId;
+    rec.mapsUrl = _selectedPlace.mapsUrl;
+  }
+  c.recommendations.push(rec);
+  persist();
+  renderContactRecsList(idx);
+  hideAddRecForm();
+}
+
+function deleteRec(contactIdx, recId) {
+  const c = contacts[contactIdx];
+  if (!c||!c.recommendations) return;
+  c.recommendations = c.recommendations.filter(r=>r.id!==recId);
+  persist();
+  renderContactRecsList(contactIdx);
+  renderRecs();
+}
+
+function renderContactRecsList(contactIdx) {
+  const el = document.getElementById('cf-recs-list'); if(!el) return;
+  const c = contacts[contactIdx];
+  const recs = c ? (c.recommendations||[]) : [];
+  if (!recs.length) { el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:4px 0">No recommendations yet</div>'; return; }
+  el.innerHTML = recs.map(r=>`
+    <div class="rec-row">
+      <span class="rec-cat-pill ${catClass(r.category)}">${r.category}</span>
+      <span style="flex:1">
+        ${r.mapsUrl ? `<a href="${r.mapsUrl}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-weight:500">${r.item} ↗</a>` : `<span style="font-weight:500">${r.item}</span>`}
+        ${r.address ? `<span style="display:block;font-size:11px;color:var(--muted)">${r.address}</span>` : ''}
+        ${r.note ? `<span style="font-size:11px;color:var(--muted)"> ${r.note}</span>` : ''}
+      </span>
+      <button onclick="deleteRec(${contactIdx},'${r.id}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1">×</button>
+    </div>`).join('');
+}
+
+function setRecsFilter(cat) {
+  _recFilter = cat;
+  document.querySelectorAll('.rec-filter').forEach(el=>el.classList.toggle('active', el.dataset.cat===cat));
+  renderRecs();
+}
+
+function renderRecs() {
+  // Filter bar
+  const bar = document.getElementById('rec-filter-bar');
+  if (bar && !bar.children.length) {
+    bar.innerHTML = REC_CATEGORIES.map(cat=>
+      `<button class="rec-filter${cat===_recFilter?' active':''}" data-cat="${cat}" onclick="setRecsFilter('${cat}')">${cat}</button>`
+    ).join('');
+  }
+  // Collect all recs across all contacts
+  const allRecs = [];
+  contacts.forEach(c => {
+    (c.recommendations||[]).forEach(r => {
+      if (_recFilter==='All' || r.category===_recFilter) {
+        allRecs.push({...r, contactName: cName(c), contactId: c.id});
+      }
+    });
+  });
+  allRecs.sort((a,b)=>a.category.localeCompare(b.category)||a.item.localeCompare(b.item));
+
+  const wrap = document.getElementById('recs-wrap');
+  if (!wrap) return;
+  if (!allRecs.length) {
+    wrap.innerHTML = `<div class="empty-state">${_recFilter==='All'?'No recommendations yet — open a contact and add one.':'No '+_recFilter+' recommendations yet.'}</div>`;
+    return;
+  }
+  wrap.innerHTML = `<table><thead><tr><th>Category</th><th>Item</th><th>Details</th><th>Recommended by</th></tr></thead><tbody>${
+    allRecs.map(r=>`<tr>
+      <td><span class="rec-cat-pill ${catClass(r.category)}">${r.category}</span></td>
+      <td style="font-weight:500">${r.mapsUrl ? `<a href="${r.mapsUrl}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">${r.item} ↗</a>` : r.item}</td>
+      <td style="font-size:12px;color:var(--muted)">${r.address ? r.address+'<br>' : ''}${r.note||''}</td>
+      <td style="font-size:12px"><span class="badge badge-contact" style="cursor:pointer" onclick="switchTab('crm')">${r.contactName}</span></td>
+    </tr>`).join('')
+  }</tbody></table>`;
+}
+
+function fmt(d) {
+  if(!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  const weekday = dt.toLocaleDateString('en-GB', {weekday:'long'});
+  const rest = dt.toLocaleDateString('en-GB', {day:'numeric', month:'long'});
+  return `${weekday}, ${rest}`;
+}
+
+function showExpand() { document.getElementById('quick-expand').classList.add('visible'); populateContactDropdown('qi-contact', ''); }
+function hideExpand() {
+  document.getElementById('quick-expand').classList.remove('visible');
+  document.getElementById('quick-input').value='';
+  document.getElementById('qi-due').value='';
+  document.getElementById('qi-assignee').value='';
+  document.getElementById('qi-contact').value='';
+  const qdrop = document.getElementById('qi-ac-drop');
+  if (qdrop) qdrop.classList.remove('open');
+  const adrop = document.getElementById('qi-asgn-drop');
+  if (adrop) adrop.classList.remove('open');
+}
+
+async function draftAssigneeEmail(task) {
+  if (!task.assignee) return;
+  // Look up email — assignee stored as contact ID, legacy name, or raw email
+  const contact = resolveContact(task.assignee);
+  const email = contact ? contact.email : (task.assignee && task.assignee.includes('@') ? task.assignee : null);
+  if (!email) { showToast(`Add an email to ${task.assignee}'s contact to enable draft`, true); return; }
+  const prio = task.priority ? ` [${task.priority}]` : '';
+  const dueStr = task.due ? fmt(task.due) : 'not set';
+  const bodyText = `Hi ${contact ? contact.firstName||task.assignee : task.assignee},\n\nI wanted to assign you the following task:\n\nTask: ${task.title}${prio}\nProject: ${task.project}\nDue: ${dueStr}\n\nPlease let me know if you have any questions.\n\nKind regards,\nFarid`;
+  // Open the device's mail app with a pre-filled draft
+  const href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent('Task: ' + task.title)}&body=${encodeURIComponent(bodyText)}`;
+  const a = document.createElement('a');
+  a.href = href;
+  a.click();
+  showToast(`✉ Opening email draft for ${email}`);
+}
+
+function addTask() {
+  const title = document.getElementById('quick-input').value.trim();
+  if (!title) return;
+  const t = {
+    title,
+    project: document.getElementById('qi-project').value,
+    status: 'To Do',
+    due: document.getElementById('qi-due').value,
+    assignee: resolveContactId(document.getElementById('qi-assignee').value.trim()),
+    contact: resolveContactId(document.getElementById('qi-contact').value.trim())
+  };
+  tasks.push(t);
+  persist(); hideExpand(); renderTasks();
+  draftAssigneeEmail(t);
+}
+
+// ── Custom autocomplete ──────────────────────────────────────────────────────
+let _acFocus = {qi:-1, et:-1};
+
+function acOpen(ns) { acFilter(ns); }
+
+function acClose(ns) {
+  setTimeout(()=>{ const d=document.getElementById(ns+'-ac-drop'); if(d) d.classList.remove('open'); _acFocus[ns]=-1; }, 160);
+}
+
+function acFilter(ns) {
+  const inp = document.getElementById(ns+'-contact');
+  const drop = document.getElementById(ns+'-ac-drop');
+  if (!inp||!drop) return;
+  // Position fixed relative to the input so it escapes overflow:hidden parents
+  const rect = inp.getBoundingClientRect();
+  drop.style.top = (rect.bottom + 4) + 'px';
+  drop.style.left = rect.left + 'px';
+  drop.style.width = Math.max(220, rect.width + 32) + 'px';
+  const q = inp.value.toLowerCase();
+  const matches = contacts.filter(c=>!q||cName(c).toLowerCase().includes(q));
+  _acFocus[ns] = -1;
+  const typed = inp.value.trim();
+  const nameEsc = s => s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  let html = matches.map(c=>`<div class="ac-item" onmousedown="event.preventDefault();acSelect('${ns}','${nameEsc(cName(c))}')"><span class="ac-item-name">${cName(c)}</span></div>`).join('');
+  html += `<div class="ac-item-add" onmousedown="event.preventDefault();acAddNew('${ns}','${nameEsc(typed)}')">＋ ${typed?'Add "'+typed+'" as new contact':'Add new contact'}</div>`;
+  drop.innerHTML = html;
+  drop.classList.add('open');
+}
+
+function acSelect(ns, name) {
+  const inp=document.getElementById(ns+'-contact'); if(inp) inp.value=name;
+  const drop=document.getElementById(ns+'-ac-drop'); if(drop) drop.classList.remove('open');
+}
+
+function acAddNew(ns, typed) {
+  _pendingContactTarget = ns+'-contact';
+  openContactModal(typed); // pre-fills first name field
+}
+
+function acKey(e, ns) {
+  const drop=document.getElementById(ns+'-ac-drop');
+  const items=drop?[...drop.querySelectorAll('.ac-item')]:[];
+  if(e.key==='ArrowDown'){e.preventDefault();_acFocus[ns]=Math.min(_acFocus[ns]+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('focused',i===_acFocus[ns]));}
+  else if(e.key==='ArrowUp'){e.preventDefault();_acFocus[ns]=Math.max(_acFocus[ns]-1,0);items.forEach((el,i)=>el.classList.toggle('focused',i===_acFocus[ns]));}
+  else if(e.key==='Enter'&&_acFocus[ns]>=0){e.preventDefault();const f=items[_acFocus[ns]];if(f) acSelect(ns,f.querySelector('.ac-item-name').textContent);}
+  else if(e.key==='Escape'){if(drop) drop.classList.remove('open');}
+}
+
+// Sets the ac input value and re-populates for a given inputId like 'qi-contact'
+function populateContactDropdown(inputId, val) {
+  const inp=document.getElementById(inputId); if(!inp) return;
+  if(val!==undefined) inp.value=val||'';
+}
+
+let _pendingContactTarget = null;
+function openContactModalFromTask(targetInputId) {
+  _pendingContactTarget = targetInputId;
+  openContactModal();
+}
+
+// ── Assignee autocomplete (mirrors contact AC but no + button) ───────────────
+let _asgnFocus = {qi:-1, et:-1};
+function asgnOpen(ns) { asgnFilter(ns); }
+function asgnClose(ns) { setTimeout(()=>{ const d=document.getElementById(ns+'-asgn-drop'); if(d) d.classList.remove('open'); _asgnFocus[ns]=-1; }, 160); }
+function asgnFilter(ns) {
+  const inp = document.getElementById(ns+'-assignee');
+  const drop = document.getElementById(ns+'-asgn-drop');
+  if (!inp||!drop) return;
+  const rect = inp.getBoundingClientRect();
+  drop.style.top = (rect.bottom+4)+'px'; drop.style.left = rect.left+'px'; drop.style.width = Math.max(200, rect.width+32)+'px';
+  const q = inp.value.toLowerCase();
+  const matches = contacts.filter(c=>!q||cName(c).toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q));
+  _asgnFocus[ns] = -1;
+  const nameEsc = s => s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  drop.innerHTML = matches.map(c=>`<div class="ac-item" onmousedown="event.preventDefault();asgnSelect('${ns}','${nameEsc(cName(c))}')"><span class="ac-item-name">${cName(c)}</span>${c.email?`<span class="ac-item-sub">${c.email}</span>`:''}</div>`).join('') || '<div class="ac-item" style="color:var(--muted)">No contacts found</div>';
+  drop.classList.add('open');
+}
+function asgnSelect(ns, name) {
+  const inp=document.getElementById(ns+'-assignee'); if(inp) inp.value=name;
+  const drop=document.getElementById(ns+'-asgn-drop'); if(drop) drop.classList.remove('open');
+}
+function asgnKey(e, ns) {
+  const drop=document.getElementById(ns+'-asgn-drop');
+  const items=drop?[...drop.querySelectorAll('.ac-item')]:[];
+  if(e.key==='ArrowDown'){e.preventDefault();_asgnFocus[ns]=Math.min(_asgnFocus[ns]+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('focused',i===_asgnFocus[ns]));}
+  else if(e.key==='ArrowUp'){e.preventDefault();_asgnFocus[ns]=Math.max(_asgnFocus[ns]-1,0);items.forEach((el,i)=>el.classList.toggle('focused',i===_asgnFocus[ns]));}
+  else if(e.key==='Enter'&&_asgnFocus[ns]>=0){e.preventDefault();const f=items[_asgnFocus[ns]];if(f) asgnSelect(ns,f.querySelector('.ac-item-name').textContent);}
+  else if(e.key==='Escape'){if(drop) drop.classList.remove('open');}
+}
+
+// ── Project drag-to-reorder ───────────────────────────────────────────────────
+let _dragProjIdx = null;
+
+function attachProjDrag(sec, projIdx) {
+  const label = sec.querySelector('.project-label');
+  if (!label) return;
+  label.addEventListener('mousedown', () => sec.setAttribute('draggable','true'));
+  label.addEventListener('mouseup',   () => sec.setAttribute('draggable','false'));
+  sec.addEventListener('dragstart', e => {
+    _dragProjIdx = projIdx;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => sec.style.opacity = '0.4', 0);
+  });
+  sec.addEventListener('dragend', () => {
+    sec.style.opacity = '';
+    sec.removeAttribute('draggable');
+    document.querySelectorAll('.proj-drag-over').forEach(el=>el.classList.remove('proj-drag-over'));
+    _dragProjIdx = null;
+  });
+  sec.addEventListener('dragover', e => {
+    if (_dragProjIdx === null || _dragProjIdx === projIdx) return;
+    e.preventDefault();
+    document.querySelectorAll('.proj-drag-over').forEach(el=>el.classList.remove('proj-drag-over'));
+    sec.classList.add('proj-drag-over');
+  });
+  sec.addEventListener('dragleave', () => sec.classList.remove('proj-drag-over'));
+  sec.addEventListener('drop', e => {
+    e.preventDefault();
+    if (_dragProjIdx === null || _dragProjIdx === projIdx) return;
+    const moved = PROJECTS.splice(_dragProjIdx, 1)[0];
+    const target = projIdx > _dragProjIdx ? projIdx - 1 : projIdx;
+    PROJECTS.splice(target, 0, moved);
+    saveProjects();
+    _dragProjIdx = null;
+    renderTasks();
+  });
+}
+
+// ── Task drag-to-reorder ──────────────────────────────────────────────────────
+let _dragIdx = null;
+function attachDrag(row, ri) {
+  row.setAttribute('draggable', 'true');
+  row.addEventListener('dragstart', e => {
+    _dragIdx = ri;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => row.classList.add('dragging'), 0);
+  });
+  row.addEventListener('dragend', () => {
+    row.classList.remove('dragging');
+    document.querySelectorAll('.drag-over-top,.drag-over-bottom').forEach(el=>el.classList.remove('drag-over-top','drag-over-bottom'));
+    _dragIdx = null;
+  });
+  row.addEventListener('dragover', e => {
+    e.preventDefault();
+    document.querySelectorAll('.drag-over-top,.drag-over-bottom').forEach(el=>el.classList.remove('drag-over-top','drag-over-bottom'));
+    const mid = row.getBoundingClientRect().top + row.getBoundingClientRect().height/2;
+    row.classList.add(e.clientY < mid ? 'drag-over-top' : 'drag-over-bottom');
+  });
+  row.addEventListener('drop', e => {
+    e.preventDefault();
+    if (_dragIdx === null || _dragIdx === ri) return;
+    const mid = row.getBoundingClientRect().top + row.getBoundingClientRect().height/2;
+    const before = e.clientY < mid;
+    const dragged = tasks.splice(_dragIdx, 1)[0];
+    let target = ri > _dragIdx ? ri - 1 : ri;
+    if (!before) target++;
+    tasks.splice(Math.min(target, tasks.length), 0, dragged);
+    _dragIdx = null;
+    persist(); renderTasks();
+  });
+}
+
+// ── View filter ───────────────────────────────────────────────────────────────
+const ARCHIVE_DAYS = 14;
+let _taskView = 'active'; // 'active' | 'all' | 'archive'
+
+function setView(v) {
+  _taskView = v;
+  ['active','all','archive'].forEach(id => {
+    const el = document.getElementById('pill-'+id);
+    if (el) el.classList.toggle('active', id===v);
+  });
+  renderTasks();
+}
+
+function autoArchive() {
+  const cutoff = Date.now() - ARCHIVE_DAYS * 86400000;
+  let changed = false;
+  tasks.forEach(t => {
+    if (t.status === 'Done' && t.doneAt && new Date(t.doneAt).getTime() < cutoff) {
+      t.status = 'Archived'; changed = true;
+    }
+  });
+  if (changed) persist();
+}
+
+function taskMatchesView(t) {
+  if (_taskView === 'active') return t.status !== 'Done' && t.status !== 'Archived';
+  if (_taskView === 'archive') return t.status === 'Archived';
+  return t.status !== 'Archived'; // 'all' = everything except archived
+}
+
+// ── Status cycling ────────────────────────────────────────────────────────────
+const STATUS_CYCLE = ['To Do','In Progress','Done'];
+function cycleStatus(idx) {
+  const cur = tasks[idx].status || 'To Do';
+  const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(cur)+1) % STATUS_CYCLE.length];
+  tasks[idx].status = next;
+  tasks[idx].doneAt = next === 'Done' ? new Date().toISOString() : null;
+  persist(); renderTasks();
+}
+function statusClass(s) { return s==='Done'||s==='Archived'?'done':s==='In Progress'?'inprogress':'todo'; }
+function statusLabel(s) { return s==='Archived'?'Done':s||'To Do'; }
+
+function renderTasks() {
+  autoArchive();
+  const archivedCount = tasks.filter(t=>t.status==='Archived').length;
+  const note = document.getElementById('archive-note');
+  if (note) note.textContent = archivedCount ? `${archivedCount} task${archivedCount>1?'s':''} auto-archived after ${ARCHIVE_DAYS} days` : '';
+  const wrap = document.getElementById('tasks-wrap');
+  if (editingIdx !== null) { renderTasksWithEdit(wrap); return; }
+  wrap.innerHTML = '';
+  let anyTask = false;
+  PROJECTS.forEach((proj, projIdx) => {
+    const projTasks = tasks
+      .filter(t => t.project === proj && taskMatchesView(t))
+      .sort((a,b) => {
+        if (!a.due && !b.due) return 0;
+        if (!a.due) return 1;   // no date → goes to bottom
+        if (!b.due) return -1;
+        return a.due < b.due ? -1 : a.due > b.due ? 1 : 0;
+      });
+    if (!projTasks.length) return;
+    anyTask = true;
+    const sec = document.createElement('div');
+    sec.className = 'project-section';
+    sec.innerHTML = `<div class="project-label" title="Drag to reorder project">${proj}</div>`;
+    attachProjDrag(sec, projIdx);
+    projTasks.forEach(t => {
+      const ri = tasks.indexOf(t);
+      const row = document.createElement('div');
+      row.className = 'task-row';
+      const isDone = t.status === 'Done';
+      const st = t.status || 'To Do';
+      let badges = '';
+      if (t.due) badges += `<span class="badge badge-due">${fmt(t.due)}</span>`;
+      if (t.contact) badges += `<span class="badge badge-contact">@ ${contactDisplayName(t.contact)}</span>`;
+      if (t.assignee) badges += `<span class="badge badge-assignee">${contactDisplayName(t.assignee)}</span>`;
+      row.onclick = (e) => { if(!e.target.classList.contains('task-check')&&!e.target.classList.contains('status-btn')&&!e.target.classList.contains('drag-handle')) startEdit(ri); };
+      row.innerHTML = `
+        <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
+        <div class="task-check ${isDone?'done':''}" onclick="event.stopPropagation();toggleDone(${ri})"></div>
+        <div class="task-body">
+          <div class="task-top">
+            <div class="task-title ${isDone?'done':''}">${t.title}</div>
+            <button class="status-btn ${statusClass(st)}" onclick="event.stopPropagation();cycleStatus(${ri})">${st}</button>
+          </div>
+          <div class="task-badges">${badges}</div>
+        </div>`;
+      attachDrag(row, ri);
+      sec.appendChild(row);
+    });
+    wrap.appendChild(sec);
+  });
+  if (!anyTask) {
+    const msg = _taskView==='archive' ? 'No archived tasks yet — completed tasks auto-archive after 14 days.'
+      : _taskView==='all' ? 'No tasks yet — type one above to get started.'
+      : 'All clear! No active tasks. Switch to <b>All</b> or <b>Archive</b> to see completed work.';
+    wrap.innerHTML = `<div class="empty-state">${msg}</div>`;
+  }
+}
+
+function renderTasksWithEdit(wrap) {
+  wrap.innerHTML = '';
+  let anyTask = false;
+  PROJECTS.forEach((proj, projIdx) => {
+    const projTasks = tasks.filter(t => t.project === proj && (tasks.indexOf(t)===editingIdx || taskMatchesView(t)));
+    if (!projTasks.length) return;
+    anyTask = true;
+    const sec = document.createElement('div');
+    sec.className = 'project-section';
+    sec.innerHTML = `<div class="project-label" title="Drag to reorder project">${proj}</div>`;
+    attachProjDrag(sec, projIdx);
+    projTasks.forEach(t => {
+      const ri = tasks.indexOf(t);
+      if (ri === editingIdx) {
+        const erow = document.createElement('div');
+        erow.className = 'edit-row';
+        erow.innerHTML = `
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <input type="text" id="et-title" value="${t.title}" style="flex:1;border:none;border-bottom:1px solid var(--border);outline:none;font-size:13px;font-weight:500;padding:2px 0;background:transparent;color:var(--text)">
+            <button class="status-btn ${statusClass(t.status||'To Do')}" onclick="tasks[${ri}].status=STATUS_CYCLE[(STATUS_CYCLE.indexOf(tasks[${ri}].status||'To Do')+1)%STATUS_CYCLE.length];persist();this.className='status-btn '+statusClass(tasks[${ri}].status);this.textContent=tasks[${ri}].status">${t.status||'To Do'}</button>
+          </div>
+          <div class="edit-fields">
+            <div class="qf"><label>Project</label>
+              <select id="et-project">${PROJECTS.map(p=>`<option ${p===t.project?'selected':''}>${p}</option>`).join('')}</select>
+            </div>
+            <div class="qf"><label>Due</label><input type="date" id="et-due" value="${t.due||''}"></div>
+            <div class="qf"><label>Assignee</label>
+              <div class="ac-wrap">
+                <div class="ac-input-row">
+                  <input type="text" id="et-assignee" value="${t.assignee||''}" placeholder="Search…" autocomplete="off"
+                    oninput="asgnFilter('et')" onfocus="asgnOpen('et')" onblur="asgnClose('et')" onkeydown="asgnKey(event,'et')">
+                </div>
+                <div class="ac-dropdown" id="et-asgn-drop"></div>
+              </div>
+            </div>
+            <div class="qf"><label>Contact</label>
+              <div class="ac-wrap" id="et-ac-wrap">
+                <div class="ac-input-row">
+                  <input type="text" id="et-contact" placeholder="Search…" autocomplete="off"
+                    oninput="acFilter('et')" onfocus="acOpen('et')" onblur="acClose('et')" onkeydown="acKey(event,'et')">
+                  <button type="button" class="ac-add-btn" title="Add new contact" onclick="openContactModalFromTask('et-contact')">＋</button>
+                </div>
+                <div class="ac-dropdown" id="et-ac-drop"></div>
+              </div>
+            </div>
+            <div class="edit-actions">
+              <button class="btn-delete" onclick="deleteTask(${ri})">Delete</button>
+              <button class="btn-cancel2" onclick="cancelEdit()">Cancel</button>
+              <button class="btn-save" onclick="saveEdit(${ri})">Save</button>
+            </div>
+          </div>`;
+        sec.appendChild(erow);
+        setTimeout(()=>{
+          populateContactDropdown('et-contact', contactDisplayName(t.contact));
+          populateContactDropdown('et-assignee', contactDisplayName(t.assignee));
+        },0);
+      } else {
+        const row = document.createElement('div');
+        row.className = 'task-row';
+        const isDone = t.status === 'Done';
+        let badges = `<span class="badge badge-status-${t.status.toLowerCase().replace(' ','')}">${t.status}</span>`;
+        if (t.priority) badges += `<span class="badge badge-${t.priority.toLowerCase()}">${t.priority}</span>`;
+        if (t.due) badges += `<span class="badge badge-due">${fmt(t.due)}</span>`;
+        if (t.contact) badges += `<span class="badge badge-contact">@ ${t.contact}</span>`;
+        if (t.assignee) badges += `<span class="badge badge-assignee">${t.assignee.split('@')[0]}</span>`;
+        row.onclick = (e) => { if(!e.target.classList.contains('task-check')) startEdit(ri); };
+        row.innerHTML = `
+          <div class="task-check ${isDone?'done':''}" onclick="event.stopPropagation();toggleDone(${ri})"></div>
+          <div class="task-body">
+            <div class="task-title ${isDone?'done':''}">${t.title}</div>
+            <div class="task-badges">${badges}</div>
+          </div>`;
+        sec.appendChild(row);
+      }
+    });
+    wrap.appendChild(sec);
+  });
+  if (!anyTask) wrap.innerHTML = '<div class="empty-state">No tasks yet — type one above to get started.</div>';
+}
+
+function toggleDone(idx) {
+  const isDone = tasks[idx].status === 'Done' || tasks[idx].status === 'Archived';
+  tasks[idx].status = isDone ? 'To Do' : 'Done';
+  tasks[idx].doneAt = isDone ? null : new Date().toISOString();
+  persist(); renderTasks();
+}
+function startEdit(idx) { editingIdx = idx; renderTasks(); }
+function cancelEdit() { editingIdx = null; renderTasks(); }
+function saveEdit(idx) {
+  const prevAssignee = tasks[idx].assignee || '';
+  const newAssignee = document.getElementById('et-assignee').value.trim();
+  tasks[idx] = { title:document.getElementById('et-title').value.trim()||tasks[idx].title, project:document.getElementById('et-project').value, status:tasks[idx].status||'To Do', due:document.getElementById('et-due').value, assignee:resolveContactId(newAssignee), contact:resolveContactId(document.getElementById('et-contact').value.trim()) };
+  editingIdx = null; persist(); renderTasks();
+  if (newAssignee && newAssignee !== prevAssignee) draftAssigneeEmail(tasks[idx]);
+}
+function deleteTask(idx) { tasks.splice(idx,1); editingIdx=null; persist(); renderTasks(); }
+
+// ── Projects management ───────────────────────────────────────────────────────
+function saveProjects() { localStorage.setItem('ws2projects', JSON.stringify(PROJECTS)); scheduleCloudSave(); }
+
+function renderProjectsList() {
+  document.getElementById('projects-list').innerHTML = PROJECTS.map((p,i)=>
+    `<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border)" id="proj-row-${i}">
+      <input type="text" value="${p.replace(/"/g,'&quot;')}" id="proj-input-${i}"
+        style="flex:1;border:none;border-bottom:1px solid transparent;outline:none;font-size:13px;background:transparent;color:var(--text);padding:2px 4px;border-radius:4px"
+        onfocus="this.style.borderBottomColor='var(--accent)'"
+        onblur="this.style.borderBottomColor='transparent';renameProject(${i},this.value)"
+        onkeydown="if(event.key==='Enter'){this.blur()}if(event.key==='Escape'){this.value=PROJECTS[${i}];this.blur()}">
+      ${PROJECTS.length>1?`<button onclick="removeProject(${i})" title="Delete project" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;flex-shrink:0">×</button>`:''}
+    </div>`).join('');
+}
+
+function renameProject(i, newName) {
+  newName = newName.trim();
+  if (!newName || newName === PROJECTS[i]) return;
+  const old = PROJECTS[i];
+  PROJECTS[i] = newName;
+  // Update any tasks that referenced the old project name
+  tasks.forEach(t => { if (t.project === old) t.project = newName; });
+  saveProjects(); persist();
+  refreshProjectSelects(); renderTasks();
+}
+
+function openProjectsModal() { renderProjectsList(); document.getElementById('projects-modal').classList.add('open'); }
+function closeProjectsModal() { document.getElementById('projects-modal').classList.remove('open'); }
+
+function addProject() {
+  const inp = document.getElementById('new-project-input');
+  const name = inp.value.trim(); if(!name||PROJECTS.includes(name)) return;
+  PROJECTS.push(name); saveProjects(); inp.value='';
+  renderProjectsList(); refreshProjectSelects();
+  renderTasks(); setTimeout(() => renderTasks(), 80);
+}
+function removeProject(i) {
+  PROJECTS.splice(i,1); saveProjects();
+  renderProjectsList(); refreshProjectSelects(); renderTasks();
+}
+
+function refreshProjectSelects() {
+  const sorted = [...PROJECTS].sort((a,b)=>a.localeCompare(b));
+  ['qi-project','et-project','cf-project'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    const cur=el.value;
+    if(id==='cf-project') { el.innerHTML='<option value="">—</option>'+sorted.map(p=>`<option>${p}</option>`).join(''); }
+    else { el.innerHTML=sorted.map(p=>`<option ${p===cur?'selected':''}>${p}</option>`).join(''); }
+  });
+}
+
+// ── CRM sort state ────────────────────────────────────────────────────────────
+let _crmSort = {field:'firstName', dir:1}; // dir: 1=asc, -1=desc
+
+const CRM_COLS = [
+  {label:'First name',  field:'firstName'},
+  {label:'Last name',   field:'lastName'},
+  {label:'Type',        field:'type'},
+  {label:'Email',       field:'email'},
+  {label:'LinkedIn',    field:'linkedin'},
+  {label:'Project',     field:'project'},
+  {label:'Last contact',field:'lastContact'},
+];
+
+// Migrate old contacts that have `name` but not firstName/lastName
+contacts.forEach(c => {
+  if (!c.firstName && !c.lastName && c.name) {
+    const parts = c.name.trim().split(' ');
+    c.firstName = parts[0] || '';
+    c.lastName  = parts.slice(1).join(' ') || '';
+  }
+});
+
+function crmSortBy(field) {
+  if (_crmSort.field === field) _crmSort.dir *= -1;
+  else { _crmSort.field = field; _crmSort.dir = 1; }
+  renderCRM();
+}
+
+function renderCRM() {
+  const q = (document.getElementById('crm-search').value||'').toLowerCase();
+  let f = contacts.filter(c=>!q||[cName(c),c.email,c.type,c.project,c.notes].some(v=>v&&v.toLowerCase().includes(q)));
+  const {field, dir} = _crmSort;
+  f = [...f].sort((a,b)=> {
+    const av = (a[field]||'').toLowerCase(), bv = (b[field]||'').toLowerCase();
+    return av < bv ? -dir : av > bv ? dir : 0;
+  });
+  const wrap = document.getElementById('crm-wrap');
+  if (!f.length) { wrap.innerHTML='<div class="empty-state">No contacts found.</div>'; return; }
+  const thead = CRM_COLS.map(col => {
+    const isActive = col.field === field;
+    const icon = isActive
+      ? `<span style="margin-left:4px;font-size:10px;color:var(--accent)">${dir===1?'↑':'↓'}</span>`
+      : `<span style="margin-left:4px;font-size:10px;opacity:.3">⇅</span>`;
+    return `<th onclick="crmSortBy('${col.field}')" class="${isActive?'sort-active':''}">${col.label}${icon}</th>`;
+  }).join('');
+  const rows = f.map(c => {
+    const idx = contacts.indexOf(c);
+    return `<tr style="cursor:pointer" onclick="editContact(${idx})">
+      <td style="font-weight:500">${c.firstName||''}</td>
+      <td style="font-weight:500">${c.lastName||''}</td>
+      <td><span class="type-pill">${c.type||''}</span></td>
+      <td>${c.email?`<a href="mailto:${c.email}" style="color:var(--accent)" onclick="event.stopPropagation()">${c.email}</a>`:''}</td>
+      <td>${c.linkedin&&c.linkedin!=='https://www.linkedin.com/in/'?`<a href="${c.linkedin}" target="_blank" style="color:#0a66c2;font-size:12px" onclick="event.stopPropagation()">in</a>`:''}</td>
+      <td style="font-size:12px;color:var(--muted)">${c.project||''}</td>
+      <td style="font-size:12px;color:var(--muted)">${c.lastContact?fmt(c.lastContact):''}</td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `<table><thead><tr>${thead}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ── Contact modal (add + edit) ────────────────────────────────────────────────
+let _editingContactIdx = null;
+
+function openContactModal(prefillFirst) {
+  _editingContactIdx = null;
+  document.getElementById('contact-modal-title').textContent = 'Add contact';
+  ['cf-firstname','cf-lastname','cf-email','cf-phone','cf-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cf-linkedin').value='https://www.linkedin.com/in/';
+  if (prefillFirst) document.getElementById('cf-firstname').value = prefillFirst;
+  document.getElementById('cf-type').value='Investor';
+  const ps = document.getElementById('cf-project');
+  ps.innerHTML='<option value="">—</option>'+PROJECTS.map(p=>`<option>${p}</option>`).join('');
+  document.getElementById('cf-last').value=new Date().toISOString().split('T')[0];
+  document.getElementById('contact-delete-btn').style.display = 'none';
+  hideAddRecForm();
+  renderContactRecsList(-1); // empty list for new contact
+  document.getElementById('contact-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('cf-firstname').focus(),50);
+}
+
+function editContact(idx) {
+  const c = contacts[idx]; if(!c) return;
+  _editingContactIdx = idx;
+  document.getElementById('contact-modal-title').textContent = 'Edit contact';
+  document.getElementById('cf-firstname').value = c.firstName||'';
+  document.getElementById('cf-lastname').value  = c.lastName||'';
+  document.getElementById('cf-email').value     = c.email||'';
+  document.getElementById('cf-phone').value     = c.phone||'';
+  document.getElementById('cf-linkedin').value  = c.linkedin||'https://www.linkedin.com/in/';
+  document.getElementById('cf-type').value      = c.type||'Investor';
+  document.getElementById('cf-notes').value     = c.notes||'';
+  document.getElementById('cf-last').value      = c.lastContact||new Date().toISOString().split('T')[0];
+  const ps = document.getElementById('cf-project');
+  ps.innerHTML='<option value="">—</option>'+PROJECTS.map(p=>`<option ${p===c.project?'selected':''}>${p}</option>`).join('');
+  document.getElementById('contact-delete-btn').style.display = 'inline-flex';
+  hideAddRecForm();
+  renderContactRecsList(idx);
+  document.getElementById('contact-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('cf-firstname').focus(),50);
+}
+
+function closeContactModal() {
+  document.getElementById('contact-modal').classList.remove('open');
+  _editingContactIdx = null;
+}
+function deleteContact() {
+  if (_editingContactIdx === null) return;
+  if (!confirm(`Delete ${cName(contacts[_editingContactIdx])}?`)) return;
+  contacts.splice(_editingContactIdx, 1);
+  persist(); closeContactModal(); renderCRM();
+}
+
+function saveContact() {
+  const firstName = document.getElementById('cf-firstname').value.trim();
+  const lastName  = document.getElementById('cf-lastname').value.trim();
+  if(!firstName && !lastName) return;
+  const fullName = [firstName,lastName].filter(Boolean).join(' ');
+  const data = {firstName, lastName,
+    email:document.getElementById('cf-email').value.trim(),
+    phone:document.getElementById('cf-phone').value.trim(),
+    linkedin:document.getElementById('cf-linkedin').value.trim(),
+    type:document.getElementById('cf-type').value,
+    project:document.getElementById('cf-project').value,
+    lastContact:document.getElementById('cf-last').value,
+    notes:document.getElementById('cf-notes').value.trim()
+  };
+  if (_editingContactIdx !== null) {
+    // preserve recommendations when editing
+    data.recommendations = contacts[_editingContactIdx].recommendations || [];
+    contacts[_editingContactIdx] = {...contacts[_editingContactIdx], ...data};
+  } else {
+    data.id = 'C'+String(contacts.length+1).padStart(3,'0');
+    data.recommendations = [];
+    contacts.push(data);
+  }
+  persist(); closeContactModal(); renderCRM();
+  if (_pendingContactTarget) {
+    const inp = document.getElementById(_pendingContactTarget);
+    if (inp) inp.value = fullName;
+    _pendingContactTarget = null;
+  }
+}
+
+function toCSV(rows, headers) {
+  const esc = v => '"' + String(v||'').replace(/"/g,'""') + '"';
+  return [headers.join(','), ...rows.map(r => headers.map(h => esc(r[h.toLowerCase().replace(/ /g,'')]||r[h]||'')).join(','))].join('\n');
+}
+
+function makeCSV(rows, cols) {
+  const q = v => '"'+(String(v||'')).replace(/"/g,'""')+'"';
+  return [cols.join(','), ...rows.map(r=>cols.map(c=>q(r[c])).join(','))].join('\n');
+}
+
+// ── JSON import (one-time data migration) ────────────────────────────────────
+function importJSON(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data || (!Array.isArray(data.tasks) && !Array.isArray(data.contacts))) {
+        showToast('Invalid file — expected {projects, tasks, contacts}', true); return;
+      }
+      if (!confirm('Import will REPLACE current data on all devices. Continue?')) return;
+      if (Array.isArray(data.projects) && data.projects.length) PROJECTS = data.projects;
+      if (Array.isArray(data.tasks)) tasks = data.tasks;
+      if (Array.isArray(data.contacts)) contacts = data.contacts;
+      localStorage.setItem('ws2projects', JSON.stringify(PROJECTS));
+      persist();
+      refreshProjectSelects(); renderTasks(); renderCRM();
+      showToast('✓ Imported ' + tasks.length + ' tasks, ' + contacts.length + ' contacts');
+    } catch(e) { showToast('Import failed: ' + e.message, true); }
+    finally { input.value = ''; }
+  };
+  reader.readAsText(file);
+}
+
+// ── CSV export (replaces the old Drive sync) ─────────────────────────────────
+function exportCSV() {
+  const dl = (name, content) => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([content], {type:'text/csv'}));
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  };
+  dl('workspace-tasks.csv', makeCSV(tasks, ['title','project','status','priority','due','assignee','contact']));
+  dl('workspace-contacts.csv', makeCSV(contacts, ['id','firstName','lastName','email','phone','linkedin','type','project','lastContact','notes']));
+  showToast('✓ CSV files downloaded');
+}
+
+function showToast(msg, isError) {
+  let t = document.getElementById('toast');
+  if (!t) { t = document.createElement('div'); t.id='toast'; t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:9px 18px;border-radius:8px;font-size:13px;font-weight:500;z-index:999;transition:opacity .3s'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.style.background = isError ? '#fee2e2' : '#dcfce7';
+  t.style.color = isError ? '#dc2626' : '#15803d';
+  t.style.opacity = '1';
+  clearTimeout(t._hide);
+  t._hide = setTimeout(() => t.style.opacity = '0', 3000);
+}
+
+document.getElementById('contact-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeContactModal();});
+document.getElementById('projects-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeProjectsModal();});
+document.getElementById('quick-input').addEventListener('keydown',e=>{if(e.key==='Enter')addTask();if(e.key==='Escape')hideExpand();});
+
+refreshProjectSelects(); // sync qi-project dropdown with stored PROJECTS on load
+renderTasks();
+renderCRM();
+initCloud();
+
+// Clear legacy flags from the old Drive-sync version
+localStorage.removeItem('ws2pendingSync');
+localStorage.removeItem('ws2driveIds');
+localStorage.removeItem('ws2lastSync');
+
+// Register service worker for offline use / PWA install
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
