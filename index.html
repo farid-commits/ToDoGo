@@ -208,20 +208,20 @@ tr:hover td{background:var(--bg)}
     padding: 12px;
     margin-bottom: 10px;
     cursor: pointer;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 2px 8px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 3px;
   }
-  /* Contact cards: first name + last name on one line, no date */
-  #crm-wrap tr { grid-template-columns: 1fr auto; grid-template-rows: auto auto; }
-  #crm-wrap tr td:nth-child(1) { grid-column: 1; grid-row: 1; font-size: 15px; font-weight: 600; display: inline; }
-  #crm-wrap tr td:nth-child(2) { grid-column: 1; grid-row: 1; font-size: 15px; font-weight: 600; display: inline; padding-left: 4px; }
-  #crm-wrap tr td:nth-child(3) { grid-column: 2; grid-row: 1; text-align: right; align-self: start; }
-  #crm-wrap tr td:nth-child(4) { grid-column: 1 / -1; grid-row: 2; font-size: 12px; color: var(--muted); }
+  /* Contact cards: first + last name on one line, type pill at right */
+  #crm-wrap tr td:nth-child(1) { order: 1; flex: 0 0 auto; font-size: 15px; font-weight: 600; padding: 0; }
+  #crm-wrap tr td:nth-child(2) { order: 2; flex: 0 0 auto; font-size: 15px; font-weight: 600; padding: 0; margin-right: auto; padding-right: 8px; }
+  #crm-wrap tr td:nth-child(3) { order: 3; flex: 0 0 auto; padding: 0; align-self: center; }
+  #crm-wrap tr td:nth-child(4) { order: 4; flex: 1 1 100%; font-size: 12px; color: var(--muted); padding: 3px 0 0; }
   #crm-wrap tr td:nth-child(5) { display: none; } /* linkedin — skip on mobile */
-  #crm-wrap tr td:nth-child(6) { grid-column: 1; grid-row: 3; font-size: 11px; color: var(--muted); }
+  #crm-wrap tr td:nth-child(6) { order: 5; flex: 1 1 100%; font-size: 11px; color: var(--muted); padding: 1px 0 0; }
   #crm-wrap tr td:nth-child(7) { display: none; } /* date — hidden on mobile */
-  #crm-wrap td { padding: 1px 0; border: none; }
+  #crm-wrap td { border: none; }
 
   /* Recommendations — stack columns */
   #panel-recs table, #panel-recs thead, #panel-recs tbody, #panel-recs tr, #panel-recs th, #panel-recs td { display: block; width: 100%; }
@@ -252,6 +252,23 @@ tr:hover td{background:var(--bg)}
   /* Quick add input */
   .qf { flex-wrap: wrap; }
   .qf select, .qf input[type=date], .qf input[type=text] { min-width: 0; flex: 1 1 120px; }
+
+  /* Compact task form inputs — prevent iOS from over-sizing native controls */
+  .qf select, .qf input[type=date] {
+    height: 36px !important;
+    padding: 4px 8px !important;
+    font-size: 14px !important;
+    -webkit-appearance: auto;
+  }
+  .edit-row .qf select, .edit-row .qf input[type=date] {
+    height: 36px !important;
+    padding: 4px 8px !important;
+    font-size: 14px !important;
+  }
+
+  /* Recommendations — remove table border so cards don't double-border */
+  #panel-recs table { border: none; background: transparent; }
+  #panel-recs tbody tr:last-child { margin-bottom: 0; }
 }
 </style>
 </head>
@@ -261,10 +278,17 @@ tr:hover td{background:var(--bg)}
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;width:320px;max-width:90vw">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="32" height="32" rx="8" fill="#2563eb"/>
-        <text x="6" y="23" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="18" font-weight="700" fill="white">T</text>
-        <circle cx="24" cy="10" r="5" fill="#60a5fa"/>
-        <text x="21.5" y="14" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="8" font-weight="700" fill="white">D</text>
+        <defs>
+          <linearGradient id="sky-a" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="55%" stop-color="#1e40af"/><stop offset="100%" stop-color="#60a5fa"/></linearGradient>
+          <radialGradient id="sun-a"><stop offset="0%" stop-color="#fde047" stop-opacity="1"/><stop offset="40%" stop-color="#fbbf24" stop-opacity="0.9"/><stop offset="70%" stop-color="#93c5fd" stop-opacity="0.3"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></radialGradient>
+          <clipPath id="rc-a"><rect width="32" height="32" rx="8"/></clipPath>
+        </defs>
+        <g clip-path="url(#rc-a)">
+          <rect width="32" height="32" fill="url(#sky-a)"/>
+          <circle cx="26" cy="5" r="13" fill="url(#sun-a)"/>
+          <ellipse cx="8" cy="26" rx="9" ry="3" fill="white" opacity="0.75"/>
+          <ellipse cx="8" cy="23" rx="6" ry="3.5" fill="white" opacity="0.75"/>
+        </g>
       </svg>
       <div>
         <h2 style="font-size:18px;font-weight:700;color:var(--accent);letter-spacing:-.02em">ToDay</h2>
@@ -297,6 +321,7 @@ tr:hover td{background:var(--bg)}
       <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="importJSON(this)">
       <hr style="border:none;border-top:1px solid var(--border)">
       <button class="mbtn" onclick="openProjectsModal();closeSettingsModal()" style="text-align:left">⚙ Manage projects</button>
+      <button class="mbtn" onclick="openAssigneesModal();closeSettingsModal()" style="text-align:left">👤 Manage assignees</button>
       <hr style="border:none;border-top:1px solid var(--border)">
       <button class="mbtn" onclick="doSignOut();closeSettingsModal()" style="text-align:left;color:#dc2626">⎋ Sign out</button>
     </div>
@@ -309,10 +334,17 @@ tr:hover td{background:var(--bg)}
 <div class="header">
   <div style="display:flex;align-items:center;gap:8px">
     <svg width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="32" height="32" rx="8" fill="#2563eb"/>
-      <text x="6" y="23" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="18" font-weight="700" fill="white">T</text>
-      <circle cx="24" cy="10" r="5" fill="#60a5fa"/>
-      <text x="21.5" y="14" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-size="8" font-weight="700" fill="white">D</text>
+      <defs>
+        <linearGradient id="sky-h" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0f172a"/><stop offset="55%" stop-color="#1e40af"/><stop offset="100%" stop-color="#60a5fa"/></linearGradient>
+        <radialGradient id="sun-h"><stop offset="0%" stop-color="#fde047" stop-opacity="1"/><stop offset="40%" stop-color="#fbbf24" stop-opacity="0.9"/><stop offset="70%" stop-color="#93c5fd" stop-opacity="0.3"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></radialGradient>
+        <clipPath id="rc-h"><rect width="32" height="32" rx="8"/></clipPath>
+      </defs>
+      <g clip-path="url(#rc-h)">
+        <rect width="32" height="32" fill="url(#sky-h)"/>
+        <circle cx="26" cy="5" r="13" fill="url(#sun-h)"/>
+        <ellipse cx="8" cy="26" rx="9" ry="3" fill="white" opacity="0.75"/>
+        <ellipse cx="8" cy="23" rx="6" ry="3.5" fill="white" opacity="0.75"/>
+      </g>
     </svg>
     <h1 style="font-size:16px;font-weight:700;color:var(--accent);letter-spacing:-.02em">ToDay</h1>
   </div>
@@ -348,13 +380,7 @@ tr:hover td{background:var(--bg)}
         </div>
         <div class="qf">
           <label>Assignee</label>
-          <div class="ac-wrap">
-            <div class="ac-input-row">
-              <input type="text" id="qi-assignee" placeholder="Search…" autocomplete="off"
-                oninput="asgnFilter('qi')" onfocus="asgnOpen('qi')" onblur="asgnClose('qi')" onkeydown="asgnKey(event,'qi')">
-            </div>
-            <div class="ac-dropdown" id="qi-asgn-drop"></div>
-          </div>
+          <select id="qi-assignee"><option value="">—</option></select>
         </div>
         <div class="qf">
           <label>Contact</label>
@@ -474,6 +500,23 @@ tr:hover td{background:var(--bg)}
   </div>
 </div>
 
+<!-- Assignees modal -->
+<div class="modal-bg" id="assignees-modal">
+  <div class="modal" style="width:380px">
+    <h3>Manage Assignees</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">People you can assign tasks to.</p>
+    <div id="assignees-list" style="margin-bottom:14px"></div>
+    <div style="display:flex;gap:6px;margin-bottom:4px">
+      <input type="text" id="new-assignee-name" placeholder="Name…" style="flex:1;border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;outline:none">
+      <input type="email" id="new-assignee-email" placeholder="email@…" style="flex:1.2;border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;outline:none" onkeydown="if(event.key==='Enter')addAssignee()">
+      <button class="mbtn mbtn-primary" onclick="addAssignee()">Add</button>
+    </div>
+    <div class="modal-footer">
+      <button class="mbtn mbtn-secondary" onclick="closeAssigneesModal()">Close</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Firebase configuration ───────────────────────────────────────────────────
 // Paste your config from Firebase console → Project settings → Your apps → Web app
@@ -489,6 +532,14 @@ const FIREBASE_CONFIG = {
 
 const DEFAULT_PROJECTS = ['Investor Relationships','Double Cheque SEIS/EIS','Q Payments'];
 let PROJECTS = JSON.parse(localStorage.getItem('ws2projects') || JSON.stringify(DEFAULT_PROJECTS));
+
+const DEFAULT_ASSIGNEES = [
+  {name:'Amanda Yau',   email:'amanda@qaccountants.com'},
+  {name:'Haroon Ashfaq',email:'haroon@qaccountants.com'},
+  {name:'Adil Talibov', email:'adil@qaccountants.com'},
+  {name:'Tatiana Pavlyuk',email:'tatiana@qaccountants.com'},
+];
+let ASSIGNEES = JSON.parse(localStorage.getItem('ws2assignees') || JSON.stringify(DEFAULT_ASSIGNEES));
 const STATUSES = ['To Do','In Progress','Done'];
 
 // No data is embedded in this file (it is hosted on a public repo).
@@ -518,6 +569,17 @@ function contactDisplayName(val) {
   if (!val) return '';
   const c = resolveContact(val);
   return c ? cName(c) : val; // fallback: show raw value (email or old name)
+}
+
+// Display name for a stored assignee email
+function assigneeDisplayName(val) {
+  if (!val) return '';
+  const a = ASSIGNEES.find(x => x.email === val || x.name === val);
+  return a ? a.name : val;
+}
+function assigneeFirstName(val) {
+  const name = assigneeDisplayName(val);
+  return name.split(' ')[0] || name;
 }
 
 // When saving a task: if the typed value matches a contact name, store their ID instead
@@ -613,7 +675,9 @@ function applyCloudData(data) {
   if (Array.isArray(data.projects)) { PROJECTS = data.projects; localStorage.setItem('ws2projects', JSON.stringify(PROJECTS)); }
   if (Array.isArray(data.tasks)) { tasks = data.tasks; localStorage.setItem('ws2tasks', JSON.stringify(tasks)); }
   if (Array.isArray(data.contacts)) { contacts = data.contacts; localStorage.setItem('ws2contacts', JSON.stringify(contacts)); }
+  if (Array.isArray(data.assignees)) { ASSIGNEES = data.assignees; localStorage.setItem('ws2assignees', JSON.stringify(ASSIGNEES)); }
   refreshProjectSelects();
+  refreshAssigneeSelects();
   renderTasks();
   renderCRM();
   const recsPanel = document.getElementById('panel-recs');
@@ -626,7 +690,7 @@ function scheduleCloudSave() {
   setSyncStatus('Saving…');
   _saveTimer = setTimeout(() => {
     _docRef.set({
-      projects: PROJECTS, tasks, contacts,
+      projects: PROJECTS, tasks, contacts, assignees: ASSIGNEES,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
       const t = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
@@ -860,19 +924,17 @@ function hideExpand() {
   document.getElementById('qi-contact').value='';
   const qdrop = document.getElementById('qi-ac-drop');
   if (qdrop) qdrop.classList.remove('open');
-  const adrop = document.getElementById('qi-asgn-drop');
-  if (adrop) adrop.classList.remove('open');
 }
 
 async function draftAssigneeEmail(task) {
   if (!task.assignee) return;
-  // Look up email — assignee stored as contact ID, legacy name, or raw email
-  const contact = resolveContact(task.assignee);
-  const email = contact ? contact.email : (task.assignee && task.assignee.includes('@') ? task.assignee : null);
-  if (!email) { showToast(`Add an email to ${task.assignee}'s contact to enable draft`, true); return; }
+  const assigneeObj = ASSIGNEES.find(a => a.email === task.assignee);
+  const email = assigneeObj ? assigneeObj.email : (task.assignee.includes('@') ? task.assignee : null);
+  if (!email) { showToast(`Can't find email for assignee`, true); return; }
+  const firstName = assigneeObj ? assigneeObj.name.split(' ')[0] : task.assignee.split('@')[0];
   const prio = task.priority ? ` [${task.priority}]` : '';
   const dueStr = task.due ? fmt(task.due) : 'not set';
-  const bodyText = `Hi ${contact ? contact.firstName||task.assignee : task.assignee},\n\nI wanted to assign you the following task:\n\nTask: ${task.title}${prio}\nProject: ${task.project}\nDue: ${dueStr}\n\nPlease let me know if you have any questions.\n\nKind regards,\nFarid`;
+  const bodyText = `Hi ${firstName},\n\nI wanted to assign you the following task:\n\nTask: ${task.title}${prio}\nProject: ${task.project}\nDue: ${dueStr}\n\nPlease let me know if you have any questions.\n\nKind regards,\nFarid`;
   // Open the device's mail app with a pre-filled draft
   const href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent('Task: ' + task.title)}&body=${encodeURIComponent(bodyText)}`;
   const a = document.createElement('a');
@@ -889,7 +951,7 @@ function addTask() {
     project: document.getElementById('qi-project').value,
     status: 'To Do',
     due: document.getElementById('qi-due').value,
-    assignee: resolveContactId(document.getElementById('qi-assignee').value.trim()),
+    assignee: document.getElementById('qi-assignee').value,
     contact: resolveContactId(document.getElementById('qi-contact').value.trim())
   };
   tasks.push(t);
@@ -1134,7 +1196,7 @@ function renderTasks() {
       let badges = '';
       if (t.due) badges += `<span class="badge badge-due">${fmt(t.due)}</span>`;
       if (t.contact) badges += `<span class="badge badge-contact">@ ${contactDisplayName(t.contact)}</span>`;
-      if (t.assignee) badges += `<span class="badge badge-assignee">${contactDisplayName(t.assignee)}</span>`;
+      if (t.assignee) badges += `<span class="badge badge-assignee">${assigneeFirstName(t.assignee)}</span>`;
       row.onclick = (e) => { if(!e.target.classList.contains('task-check')&&!e.target.classList.contains('status-btn')&&!e.target.classList.contains('drag-handle')) startEdit(ri); };
       row.innerHTML = `
         <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
@@ -1186,13 +1248,10 @@ function renderTasksWithEdit(wrap) {
             </div>
             <div class="qf"><label>Due</label><input type="date" id="et-due" value="${t.due||''}"></div>
             <div class="qf"><label>Assignee</label>
-              <div class="ac-wrap">
-                <div class="ac-input-row">
-                  <input type="text" id="et-assignee" value="${t.assignee||''}" placeholder="Search…" autocomplete="off"
-                    oninput="asgnFilter('et')" onfocus="asgnOpen('et')" onblur="asgnClose('et')" onkeydown="asgnKey(event,'et')">
-                </div>
-                <div class="ac-dropdown" id="et-asgn-drop"></div>
-              </div>
+              <select id="et-assignee">
+                <option value="">—</option>
+                ${ASSIGNEES.map(a=>`<option value="${a.email}"${a.email===(t.assignee||'')?'selected':''}>${a.name}</option>`).join('')}
+              </select>
             </div>
             <div class="qf"><label>Contact</label>
               <div class="ac-wrap" id="et-ac-wrap">
@@ -1213,7 +1272,6 @@ function renderTasksWithEdit(wrap) {
         sec.appendChild(erow);
         setTimeout(()=>{
           populateContactDropdown('et-contact', contactDisplayName(t.contact));
-          populateContactDropdown('et-assignee', contactDisplayName(t.assignee));
         },0);
       } else {
         const row = document.createElement('div');
@@ -1249,8 +1307,8 @@ function startEdit(idx) { editingIdx = idx; renderTasks(); }
 function cancelEdit() { editingIdx = null; renderTasks(); }
 function saveEdit(idx) {
   const prevAssignee = tasks[idx].assignee || '';
-  const newAssignee = document.getElementById('et-assignee').value.trim();
-  tasks[idx] = { title:document.getElementById('et-title').value.trim()||tasks[idx].title, project:document.getElementById('et-project').value, status:tasks[idx].status||'To Do', due:document.getElementById('et-due').value, assignee:resolveContactId(newAssignee), contact:resolveContactId(document.getElementById('et-contact').value.trim()) };
+  const newAssignee = document.getElementById('et-assignee').value;
+  tasks[idx] = { title:document.getElementById('et-title').value.trim()||tasks[idx].title, project:document.getElementById('et-project').value, status:tasks[idx].status||'To Do', due:document.getElementById('et-due').value, assignee:newAssignee, contact:resolveContactId(document.getElementById('et-contact').value.trim()) };
   editingIdx = null; persist(); renderTasks();
   if (newAssignee && newAssignee !== prevAssignee) draftAssigneeEmail(tasks[idx]);
 }
@@ -1305,6 +1363,56 @@ function refreshProjectSelects() {
     if(id==='cf-project') { el.innerHTML='<option value="">—</option>'+sorted.map(p=>`<option>${p}</option>`).join(''); }
     else { el.innerHTML=sorted.map(p=>`<option ${p===cur?'selected':''}>${p}</option>`).join(''); }
   });
+}
+
+function refreshAssigneeSelects() {
+  ['qi-assignee','et-assignee'].forEach(id => {
+    const el = document.getElementById(id); if (!el) return;
+    const cur = el.value;
+    el.innerHTML = '<option value="">—</option>' +
+      ASSIGNEES.map(a=>`<option value="${a.email}"${a.email===cur?' selected':''}>${a.name}</option>`).join('');
+  });
+}
+
+function saveAssignees() {
+  localStorage.setItem('ws2assignees', JSON.stringify(ASSIGNEES));
+  scheduleCloudSave();
+}
+
+function renderAssigneesList() {
+  const el = document.getElementById('assignees-list'); if (!el) return;
+  el.innerHTML = ASSIGNEES.map((a,i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500">${a.name}</div>
+        <div style="font-size:11px;color:var(--muted)">${a.email}</div>
+      </div>
+      ${ASSIGNEES.length>1?`<button onclick="removeAssignee(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1">×</button>`:''}
+    </div>`).join('');
+}
+
+function addAssignee() {
+  const name  = (document.getElementById('new-assignee-name').value||'').trim();
+  const email = (document.getElementById('new-assignee-email').value||'').trim().toLowerCase();
+  if (!name || !email) return;
+  if (ASSIGNEES.find(a=>a.email===email)) { showToast('Email already exists', true); return; }
+  ASSIGNEES.push({name, email});
+  saveAssignees(); refreshAssigneeSelects(); renderAssigneesList();
+  document.getElementById('new-assignee-name').value='';
+  document.getElementById('new-assignee-email').value='';
+}
+
+function removeAssignee(i) {
+  ASSIGNEES.splice(i,1);
+  saveAssignees(); refreshAssigneeSelects(); renderAssigneesList();
+}
+
+function openAssigneesModal() {
+  renderAssigneesList();
+  document.getElementById('assignees-modal').classList.add('open');
+}
+function closeAssigneesModal() {
+  document.getElementById('assignees-modal').classList.remove('open');
 }
 
 // ── CRM sort state ────────────────────────────────────────────────────────────
@@ -1512,9 +1620,11 @@ function showToast(msg, isError) {
 
 document.getElementById('contact-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeContactModal();});
 document.getElementById('projects-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeProjectsModal();});
+document.getElementById('assignees-modal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeAssigneesModal();});
 document.getElementById('quick-input').addEventListener('keydown',e=>{if(e.key==='Enter')addTask();if(e.key==='Escape')hideExpand();});
 
-refreshProjectSelects(); // sync qi-project dropdown with stored PROJECTS on load
+refreshProjectSelects();
+refreshAssigneeSelects();
 renderTasks();
 renderCRM();
 initCloud();
