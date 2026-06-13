@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Farid · Workspace</title>
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -181,6 +181,76 @@ tr:hover td{background:var(--bg)}
 .place-clear{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:0 2px}
 .rec-filter{border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:500;cursor:pointer}
 .rec-filter.active{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+
+/* ── Mobile overrides ── */
+@media (max-width: 600px) {
+  /* Prevent any panel from overflowing */
+  .panel { padding: 12px; overflow-x: hidden; }
+  body { overflow-x: hidden; }
+
+  /* Header: stack sign-out, hide less-used buttons */
+  .header { padding: 10px 12px; flex-wrap: wrap; gap: 6px; }
+  .header-right { gap: 5px; flex-wrap: wrap; }
+  .sync-status { display: none; }
+
+  /* Tabs: equal-width, no overflow */
+  .tabs { padding: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex: 1; text-align: center; padding: 10px 8px; font-size: 12px; white-space: nowrap; }
+
+  /* CRM — card layout instead of table */
+  #crm-wrap table, #crm-wrap thead, #crm-wrap tbody, #crm-wrap tr, #crm-wrap th, #crm-wrap td { display: block; width: 100%; }
+  #crm-wrap thead { display: none; }
+  #crm-wrap tr {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 8px;
+  }
+  /* First two TDs = name row, span both columns */
+  #crm-wrap tr td:nth-child(1) { grid-column: 1; font-size: 15px; }
+  #crm-wrap tr td:nth-child(2) { grid-column: 1; font-size: 15px; display: inline; padding-left: 4px; }
+  #crm-wrap tr td:nth-child(3) { grid-column: 2; grid-row: 1; text-align: right; }
+  #crm-wrap tr td:nth-child(4) { grid-column: 1 / -1; font-size: 12px; color: var(--muted); }
+  #crm-wrap tr td:nth-child(5) { grid-column: 2; grid-row: 3; text-align: right; }
+  #crm-wrap tr td:nth-child(6) { grid-column: 1; font-size: 11px; color: var(--muted); }
+  #crm-wrap tr td:nth-child(7) { grid-column: 1 / -1; font-size: 11px; color: var(--muted); }
+  #crm-wrap td { padding: 1px 0; border: none; }
+
+  /* Recommendations — stack columns */
+  #panel-recs table, #panel-recs thead, #panel-recs tbody, #panel-recs tr, #panel-recs th, #panel-recs td { display: block; width: 100%; }
+  #panel-recs thead { display: none; }
+  #panel-recs tr {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    align-items: flex-start;
+  }
+  #panel-recs td { padding: 0; border: none; }
+  #panel-recs tr td:nth-child(1) { order: 1; }
+  #panel-recs tr td:nth-child(2) { order: 2; flex: 1; font-weight: 500; min-width: 60%; }
+  #panel-recs tr td:nth-child(3) { order: 4; width: 100%; font-size: 11px; color: var(--muted); }
+  #panel-recs tr td:nth-child(4) { order: 3; margin-left: auto; }
+
+  /* CRM search bar full width */
+  .crm-search { width: 100%; }
+  .crm-toolbar { flex-direction: column; align-items: stretch; }
+  .btn-add-contact { width: 100%; }
+
+  /* Quick add input */
+  .qf { flex-wrap: wrap; }
+  .qf select, .qf input[type=date], .qf input[type=text] { min-width: 0; flex: 1 1 120px; }
+}
 </style>
 </head>
 <body>
