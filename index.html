@@ -441,13 +441,8 @@ tr:hover td{background:var(--bg)}
       <div class="mrow"><label>Type</label>
         <select id="cf-type"><option>Investor</option><option>Introducer</option><option>Counterparty</option><option>Client</option><option>Advisor</option><option>Plus</option><option>Other</option></select>
       </div>
-      <div class="mrow"><label>Last contact</label><input type="date" id="cf-last"></div>
-    </div>
-    <div class="mrow2">
       <div class="mrow"><label>Email</label><input type="email" id="cf-email"></div>
-      <div class="mrow"><label>Phone</label><input type="text" id="cf-phone"></div>
     </div>
-    <div class="mrow"><label>LinkedIn URL</label><input type="url" id="cf-linkedin" placeholder="https://linkedin.com/in/…"></div>
     <div class="mrow"><label>Project</label>
       <select id="cf-project"><option value="">—</option></select>
     </div>
@@ -1430,9 +1425,7 @@ const CRM_COLS = [
   {label:'Last name',   field:'lastName'},
   {label:'Type',        field:'type'},
   {label:'Email',       field:'email'},
-  {label:'LinkedIn',    field:'linkedin'},
   {label:'Project',     field:'project'},
-  {label:'Last contact',field:'lastContact'},
 ];
 
 // Migrate old contacts that have `name` but not firstName/lastName
@@ -1474,9 +1467,7 @@ function renderCRM() {
       <td style="font-weight:500">${c.lastName||''}</td>
       <td><span class="type-pill">${c.type||''}</span></td>
       <td>${c.email?`<a href="mailto:${c.email}" style="color:var(--accent)" onclick="event.stopPropagation()">${c.email}</a>`:''}</td>
-      <td>${c.linkedin&&c.linkedin!=='https://www.linkedin.com/in/'?`<a href="${c.linkedin}" target="_blank" style="color:#0a66c2;font-size:12px" onclick="event.stopPropagation()">in</a>`:''}</td>
       <td style="font-size:12px;color:var(--muted)">${c.project||''}</td>
-      <td style="font-size:12px;color:var(--muted)">${c.lastContact?fmt(c.lastContact):''}</td>
     </tr>`;
   }).join('');
   wrap.innerHTML = `<table><thead><tr>${thead}</tr></thead><tbody>${rows}</tbody></table>`;
@@ -1488,13 +1479,11 @@ let _editingContactIdx = null;
 function openContactModal(prefillFirst) {
   _editingContactIdx = null;
   document.getElementById('contact-modal-title').textContent = 'Add contact';
-  ['cf-firstname','cf-lastname','cf-email','cf-phone','cf-notes'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('cf-linkedin').value='https://www.linkedin.com/in/';
+  ['cf-firstname','cf-lastname','cf-email','cf-notes'].forEach(id=>document.getElementById(id).value='');
   if (prefillFirst) document.getElementById('cf-firstname').value = prefillFirst;
   document.getElementById('cf-type').value='Investor';
   const ps = document.getElementById('cf-project');
   ps.innerHTML='<option value="">—</option>'+PROJECTS.map(p=>`<option>${p}</option>`).join('');
-  document.getElementById('cf-last').value=new Date().toISOString().split('T')[0];
   document.getElementById('contact-delete-btn').style.display = 'none';
   hideAddRecForm();
   renderContactRecsList(-1); // empty list for new contact
@@ -1509,11 +1498,8 @@ function editContact(idx) {
   document.getElementById('cf-firstname').value = c.firstName||'';
   document.getElementById('cf-lastname').value  = c.lastName||'';
   document.getElementById('cf-email').value     = c.email||'';
-  document.getElementById('cf-phone').value     = c.phone||'';
-  document.getElementById('cf-linkedin').value  = c.linkedin||'https://www.linkedin.com/in/';
   document.getElementById('cf-type').value      = c.type||'Investor';
   document.getElementById('cf-notes').value     = c.notes||'';
-  document.getElementById('cf-last').value      = c.lastContact||new Date().toISOString().split('T')[0];
   const ps = document.getElementById('cf-project');
   ps.innerHTML='<option value="">—</option>'+PROJECTS.map(p=>`<option ${p===c.project?'selected':''}>${p}</option>`).join('');
   document.getElementById('contact-delete-btn').style.display = 'inline-flex';
@@ -1541,11 +1527,8 @@ function saveContact() {
   const fullName = [firstName,lastName].filter(Boolean).join(' ');
   const data = {firstName, lastName,
     email:document.getElementById('cf-email').value.trim(),
-    phone:document.getElementById('cf-phone').value.trim(),
-    linkedin:document.getElementById('cf-linkedin').value.trim(),
     type:document.getElementById('cf-type').value,
     project:document.getElementById('cf-project').value,
-    lastContact:document.getElementById('cf-last').value,
     notes:document.getElementById('cf-notes').value.trim()
   };
   if (_editingContactIdx !== null) {
