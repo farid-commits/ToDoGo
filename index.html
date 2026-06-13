@@ -213,14 +213,14 @@ tr:hover td{background:var(--bg)}
     align-items: baseline;
     gap: 0 3px;
   }
-  /* Contact cards: first + last name on one line, type pill at right */
-  #crm-wrap tr td:nth-child(1) { order: 1; flex: 0 0 auto; font-size: 15px; font-weight: 600; padding: 0; }
-  #crm-wrap tr td:nth-child(2) { order: 2; flex: 0 0 auto; font-size: 15px; font-weight: 600; padding: 0; margin-right: auto; padding-right: 8px; }
-  #crm-wrap tr td:nth-child(3) { order: 3; flex: 0 0 auto; padding: 0; align-self: center; }
-  #crm-wrap tr td:nth-child(4) { order: 4; flex: 1 1 100%; font-size: 12px; color: var(--muted); padding: 3px 0 0; }
-  #crm-wrap tr td:nth-child(5) { display: none; } /* linkedin — skip on mobile */
-  #crm-wrap tr td:nth-child(6) { order: 5; flex: 1 1 100%; font-size: 11px; color: var(--muted); padding: 1px 0 0; }
-  #crm-wrap tr td:nth-child(7) { display: none; } /* date — hidden on mobile */
+  /* Contact cards: first + last name on one line, email below, no type/project */
+  #crm-wrap tr td:nth-child(1) { order: 1; width: auto !important; flex: 0 0 auto; font-size: 15px; font-weight: 600; padding: 0; }
+  #crm-wrap tr td:nth-child(2) { order: 2; width: auto !important; flex: 0 0 auto; font-size: 15px; font-weight: 600; padding: 0 0 0 5px; }
+  #crm-wrap tr td:nth-child(3) { display: none; } /* type — hidden from list */
+  #crm-wrap tr td:nth-child(4) { order: 3; flex: 1 1 100%; font-size: 12px; color: var(--muted); padding: 3px 0 0; }
+  #crm-wrap tr td:nth-child(5) { display: none; } /* linkedin */
+  #crm-wrap tr td:nth-child(6) { display: none; } /* project — hidden from list */
+  #crm-wrap tr td:nth-child(7) { display: none; } /* date */
   #crm-wrap td { border: none; }
 
   /* Recommendations — stack columns */
@@ -253,17 +253,24 @@ tr:hover td{background:var(--bg)}
   .qf { flex-wrap: wrap; }
   .qf select, .qf input[type=date], .qf input[type=text] { min-width: 0; flex: 1 1 120px; }
 
-  /* Compact task form inputs — prevent iOS from over-sizing native controls */
-  .qf select, .qf input[type=date] {
-    height: 36px !important;
-    padding: 4px 8px !important;
-    font-size: 14px !important;
-    -webkit-appearance: auto;
-  }
+  /* Compact task form inputs — strip iOS native rendering so height is respected */
+  .qf select, .qf input[type=date],
   .edit-row .qf select, .edit-row .qf input[type=date] {
+    -webkit-appearance: none !important;
+    appearance: none !important;
     height: 36px !important;
-    padding: 4px 8px !important;
+    min-height: unset !important;
+    max-height: 36px !important;
+    padding: 6px 8px !important;
     font-size: 14px !important;
+    line-height: 1.2 !important;
+  }
+  /* Restore dropdown arrow for selects */
+  .qf select, .edit-row .qf select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 8px center !important;
+    padding-right: 26px !important;
   }
 
   /* Recommendations — remove table border so cards don't double-border */
@@ -286,8 +293,8 @@ tr:hover td{background:var(--bg)}
         <g clip-path="url(#rc-a)">
           <rect width="32" height="32" fill="url(#sky-a)"/>
           <circle cx="26" cy="5" r="13" fill="url(#sun-a)"/>
-          <ellipse cx="8" cy="26" rx="9" ry="3" fill="white" opacity="0.75"/>
-          <ellipse cx="8" cy="23" rx="6" ry="3.5" fill="white" opacity="0.75"/>
+          <ellipse cx="8" cy="26" rx="9" ry="3" fill="#c8e4f8" opacity="0.45"/>
+          <ellipse cx="8" cy="23" rx="6" ry="3.5" fill="#daeefa" opacity="0.38"/>
         </g>
       </svg>
       <div>
