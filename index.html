@@ -89,6 +89,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .badge-assignee{background:#f0fdf4;color:#166534}
 .task-row{cursor:pointer}
 .task-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+/* Subtasks */
+.badge-subtasks{background:#f5f3ff;color:#7c3aed}
+.subtasks{margin-top:7px;display:flex;flex-direction:column;gap:4px}
+.subtask{display:flex;align-items:center;gap:8px;font-size:12px}
+.subtask-check{flex-shrink:0;width:14px;height:14px;border-radius:4px;border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s,border-color .12s}
+.subtask-check:hover{border-color:var(--accent)}
+.subtask-check.done{background:var(--accent);border-color:var(--accent)}
+.subtask-check.done::after{content:'';display:block;width:3px;height:6px;border:1.5px solid #fff;border-top:none;border-left:none;transform:rotate(45deg) translate(0,-1px)}
+.subtask-text{color:var(--text)}
+.subtask-text.done{text-decoration:line-through;color:var(--muted)}
+.st-edit{flex:1 1 100%;margin-top:2px}
+.st-section-label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:0 0 7px}
+.st-edit-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.st-edit-row input[type=text]{flex:1;border:none;border-bottom:1px solid var(--border);outline:none;font-size:12px;padding:2px 0;background:transparent;color:var(--text)}
+.st-edit-row input[type=text]:focus{border-bottom-color:var(--accent)}
+.st-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;flex-shrink:0;padding:0 2px}
+.st-del:hover{color:var(--p1)}
+.st-add-row{display:flex;gap:6px;margin-top:8px}
+.st-add-row input{flex:1;border:1px solid var(--border);border-radius:6px;padding:6px 9px;font-size:12px;background:var(--bg);color:var(--text);outline:none}
+.st-add-row input:focus{border-color:var(--accent)}
+.st-add-btn{background:var(--accent-bg);color:var(--accent);border:none;border-radius:6px;padding:0 14px;font-size:12px;font-weight:600;cursor:pointer}
+.st-add-btn:hover{background:#e0e7ff}
 .status-btn{border:none;border-radius:12px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;letter-spacing:.01em}
 .status-btn.todo{background:#f1f5f9;color:#64748b}
 .status-btn.todo:hover{background:#e2e8f0}
@@ -1199,7 +1221,20 @@ function renderTasks() {
       if (t.due) badges += `<span class="badge badge-due">${fmt(t.due)}</span>`;
       if (t.contact) badges += `<span class="badge badge-contact">@ ${contactDisplayName(t.contact)}</span>`;
       if (t.assignee) badges += `<span class="badge badge-assignee">${assigneeFirstName(t.assignee)}</span>`;
-      row.onclick = (e) => { if(!e.target.classList.contains('task-check')&&!e.target.classList.contains('status-btn')&&!e.target.classList.contains('drag-handle')) startEdit(ri); };
+      const subs = t.subtasks || [];
+      if (subs.length) {
+        const dn = subs.filter(s=>s.done).length;
+        badges += `<span class="badge badge-subtasks">☑ ${dn}/${subs.length}</span>`;
+      }
+      let subHtml = '';
+      if (subs.length) {
+        subHtml = `<div class="subtasks">` + subs.map((s,si)=>`
+          <div class="subtask">
+            <div class="subtask-check ${s.done?'done':''}" onclick="event.stopPropagation();toggleSubtask(${ri},${si})"></div>
+            <span class="subtask-text ${s.done?'done':''}" onclick="event.stopPropagation();toggleSubtask(${ri},${si})">${s.title}</span>
+          </div>`).join('') + `</div>`;
+      }
+      row.onclick = (e) => { if(!e.target.classList.contains('task-check')&&!e.target.classList.contains('status-btn')&&!e.target.classList.contains('drag-handle')&&!e.target.classList.contains('subtask-check')&&!e.target.classList.contains('subtask-text')) startEdit(ri); };
       row.innerHTML = `
         <span class="drag-handle" title="Drag to reorder">⋮⋮</span>
         <div class="task-check ${isDone?'done':''}" onclick="event.stopPropagation();toggleDone(${ri})"></div>
@@ -1209,6 +1244,7 @@ function renderTasks() {
             <button class="status-btn ${statusClass(st)}" onclick="event.stopPropagation();cycleStatus(${ri})">${st}</button>
           </div>
           <div class="task-badges">${badges}</div>
+          ${subHtml}
         </div>`;
       attachDrag(row, ri);
       sec.appendChild(row);
@@ -1265,6 +1301,20 @@ function renderTasksWithEdit(wrap) {
                 <div class="ac-dropdown" id="et-ac-drop"></div>
               </div>
             </div>
+            <div class="st-edit">
+              <div class="st-section-label">Subtasks</div>
+              ${(t.subtasks||[]).map((s,si)=>`
+                <div class="st-edit-row">
+                  <div class="subtask-check ${s.done?'done':''}" onclick="toggleSubtask(${ri},${si})"></div>
+                  <input type="text" value="${(s.title||'').replace(/"/g,'&quot;')}" oninput="editSubtaskTitle(${ri},${si},this.value)">
+                  <button class="st-del" title="Remove subtask" onclick="removeSubtask(${ri},${si})">×</button>
+                </div>`).join('')}
+              <div class="st-add-row">
+                <input type="text" id="st-new-${ri}" placeholder="Add a subtask…" autocomplete="off"
+                  onkeydown="if(event.key==='Enter'){event.preventDefault();addSubtask(${ri})}">
+                <button class="st-add-btn" onclick="addSubtask(${ri})">Add</button>
+              </div>
+            </div>
             <div class="edit-actions">
               <button class="btn-delete" onclick="deleteTask(${ri})">Delete</button>
               <button class="btn-cancel2" onclick="cancelEdit()">Cancel</button>
@@ -1310,9 +1360,45 @@ function cancelEdit() { editingIdx = null; renderTasks(); }
 function saveEdit(idx) {
   const prevAssignee = tasks[idx].assignee || '';
   const newAssignee = document.getElementById('et-assignee').value;
-  tasks[idx] = { title:document.getElementById('et-title').value.trim()||tasks[idx].title, project:document.getElementById('et-project').value, status:tasks[idx].status||'To Do', due:document.getElementById('et-due').value, assignee:newAssignee, contact:resolveContactId(document.getElementById('et-contact').value.trim()) };
+  tasks[idx] = { ...tasks[idx], title:document.getElementById('et-title').value.trim()||tasks[idx].title, project:document.getElementById('et-project').value, status:tasks[idx].status||'To Do', due:document.getElementById('et-due').value, assignee:newAssignee, contact:resolveContactId(document.getElementById('et-contact').value.trim()) };
   editingIdx = null; persist(); renderTasks();
   if (newAssignee && newAssignee !== prevAssignee) draftAssigneeEmail(tasks[idx]);
+}
+
+// ── Subtasks ──────────────────────────────────────────────────────────────────
+// Capture in-progress edit-row field values so they aren't lost on re-render
+function captureEditFields(idx) {
+  const t = tasks[idx]; if (!t) return;
+  const ti = document.getElementById('et-title');    if (ti) t.title = ti.value.trim() || t.title;
+  const pr = document.getElementById('et-project');  if (pr) t.project = pr.value;
+  const du = document.getElementById('et-due');       if (du) t.due = du.value;
+  const as = document.getElementById('et-assignee');  if (as) t.assignee = as.value;
+  const co = document.getElementById('et-contact');   if (co) t.contact = resolveContactId(co.value.trim());
+}
+function toggleSubtask(idx, si) {
+  const t = tasks[idx]; if (!t || !t.subtasks || !t.subtasks[si]) return;
+  captureEditFields(idx);
+  t.subtasks[si].done = !t.subtasks[si].done;
+  persist(); renderTasks();
+}
+function addSubtask(idx) {
+  const inp = document.getElementById('st-new-' + idx); if (!inp) return;
+  const v = inp.value.trim(); if (!v) return;
+  captureEditFields(idx);
+  (tasks[idx].subtasks = tasks[idx].subtasks || []).push({ title: v, done: false });
+  persist(); renderTasks();
+  setTimeout(()=>{ const n = document.getElementById('st-new-' + idx); if (n) n.focus(); }, 0);
+}
+function removeSubtask(idx, si) {
+  captureEditFields(idx);
+  if (tasks[idx].subtasks) tasks[idx].subtasks.splice(si, 1);
+  persist(); renderTasks();
+}
+function editSubtaskTitle(idx, si, val) {
+  if (tasks[idx].subtasks && tasks[idx].subtasks[si]) {
+    tasks[idx].subtasks[si].title = val.trim();
+    persist();
+  }
 }
 function deleteTask(idx) { tasks.splice(idx,1); editingIdx=null; persist(); renderTasks(); }
 
